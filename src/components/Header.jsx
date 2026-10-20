@@ -25,9 +25,11 @@ export const Header = ({
           <span className="landing-brand-name">Coopera2075</span>
         </Link>
         <div className="landing-header-actions">
-          <button className="landing-login-button" type="button" onClick={onLogin}>
-            {loginLabel || (user ? "Ir al sistema" : "Iniciar sesión")}
-          </button>
+          {onLogin && (
+            <button className="landing-login-button" type="button" onClick={onLogin}>
+              {loginLabel || (user ? "Ir al sistema" : "Iniciar sesión")}
+            </button>
+          )}
           <button
             aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
             aria-pressed={isDark}
