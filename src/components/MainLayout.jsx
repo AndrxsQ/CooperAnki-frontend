@@ -17,14 +17,13 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="dashboard-shell">
+    <div className="min-h-screen">
       <Sidebar
-        user={user}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="dashboard-main">
+      <div className="ml-0 min-h-screen md:ml-64">
         <Header
           user={user}
           isDark={isDark}
@@ -33,7 +32,7 @@ const MainLayout = () => {
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
-        <main className="dashboard-content">
+        <main className="p-6 md:p-9">
           <Outlet />
         </main>
       </div>
