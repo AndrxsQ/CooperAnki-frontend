@@ -5,11 +5,6 @@ import { useTheme } from "../context/useTheme";
 import { Header } from "./Header";
 import Sidebar from "./Sidebar";
 
-const navigationItems = [
-  { to: "/", label: "Dashboard", icon: "▦" },
-  { to: "/detailed-view", label: "Vista General", icon: "▤" },
-];
-
 const PublicDashboardLayout = () => {
   const { user, isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -20,7 +15,7 @@ const PublicDashboardLayout = () => {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        items={navigationItems}
+        showPublicGroups
       />
 
       <div className="ml-0 min-h-screen min-w-0 md:ml-64">

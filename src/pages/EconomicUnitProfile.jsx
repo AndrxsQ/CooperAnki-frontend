@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { dashboardRecords } from "../data/dashboardData";
+import { getEconomicUnitById } from "../api/economicUnits";
 
 const profileFields = [
   { key: "documentNumber", label: "Número de documento" },
@@ -24,19 +25,87 @@ const formatField = (record, key) => {
 
 const EconomicUnitProfile = () => {
   const { id } = useParams();
-  const record = dashboardRecords.find((unit) => String(unit.id) === id);
+  const [request, setRequest] = useState({ key: null, status: "loading" });
+  const [retryKey, setRetryKey] = useState(0);
+  const requestKey = `${id}:${retryKey}`;
 
-  if (!record) {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getEconomicUnitById(id, controller.signal)
+      .then((record) => {
+        if (!controller.signal.aborted) {
+          setRequest({ key: requestKey, status: "success", record });
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setRequest({
+            key: requestKey,
+            status: error.response?.status === 404 ? "notFound" : "error",
+            message:
+              error.response?.data?.message ??
+              error.message ??
+              "No se pudo cargar la unidad económica.",
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, [id, requestKey]);
+
+  const loading =
+    request.key !== requestKey || request.status === "loading";
+  const record =
+    request.key === requestKey && request.status === "success"
+      ? request.record
+      : null;
+  const notFound = request.key === requestKey && request.status === "notFound";
+  const loadError =
+    request.key === requestKey && request.status === "error"
+      ? request.message
+      : "";
+
+  if (loading) {
+    return (
+      <section className="grid scroll-mt-24 gap-6">
+        <h1 className="m-0 text-[clamp(26px,3vw,34px)] font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          Cargando unidad económica...
+        </h1>
+        <Link
+          className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-sky-700 no-underline hover:underline dark:text-sky-300"
+          to="/detailed-view"
+        >
+          Volver a Vista General
+        </Link>
+      </section>
+    );
+  }
+
+  if (notFound || loadError || !record) {
     return (
       <section className="grid scroll-mt-24 gap-6">
         <div className="grid gap-2">
           <h1 className="m-0 text-[clamp(26px,3vw,34px)] font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Unidad económica no encontrada
+            {notFound
+              ? "Unidad económica no encontrada"
+              : "No se pudo cargar la unidad económica"}
           </h1>
           <p className="m-0 max-w-[680px] text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            No existe información para el perfil solicitado.
+            {notFound
+              ? "No existe información para el perfil solicitado."
+              : loadError}
           </p>
         </div>
+        {!notFound && (
+          <button
+            className="w-fit rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
+            type="button"
+            onClick={() => setRetryKey((key) => key + 1)}
+          >
+            Reintentar
+          </button>
+        )}
         <Link
           className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-sky-700 no-underline hover:underline dark:text-sky-300"
           to="/detailed-view"
@@ -65,7 +134,7 @@ const EconomicUnitProfile = () => {
             className="grid h-[76px] w-[76px] shrink-0 place-items-center rounded-full bg-sky-700 text-[30px] font-bold text-white dark:bg-sky-500"
             aria-hidden="true"
           >
-            {record.name.charAt(0).toUpperCase()}
+            {record.name?.charAt(0).toUpperCase() || "U"}
           </div>
           <div>
             <p className="m-0 text-[11px] font-bold tracking-[0.12em] text-sky-700 dark:text-sky-300">
@@ -75,7 +144,7 @@ const EconomicUnitProfile = () => {
               id="economic-unit-profile-title"
               className="my-1.5 text-[clamp(22px,3vw,30px)] font-bold tracking-tight text-slate-900 dark:text-slate-100"
             >
-              {record.name}
+              {record.name || "Nombre no especificado"}
             </h1>
             <p className="m-0 text-sm text-slate-600 dark:text-slate-300">
               {record.activity || "Sin actividades económicas registradas"}

@@ -1,10 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
-import {
-  dashboardDepartments,
-  dashboardRecords,
-} from "../data/dashboardData";
+import { getEconomicUnits } from "../api/economicUnits";
 
 const initialFilters = {
   name: "",
@@ -16,75 +13,20 @@ const initialFilters = {
 const pageSizeOptions = [10, 25, 50, 100];
 const numberFormatter = new Intl.NumberFormat("es-CO");
 
-const municipalityOptions = [
-  { value: "all", label: "Todos los municipios" },
-  ...Array.from(new Set(dashboardRecords.map((record) => record.municipality)))
-    .sort((first, second) => first.localeCompare(second, "es"))
-    .map((municipality) => ({ value: municipality, label: municipality })),
-];
-
-const departmentOptions = [
-  { value: "all", label: "Todos los departamentos" },
-  ...Array.from(
-    new Set([
-      ...dashboardDepartments,
-      ...dashboardRecords.map((record) => record.department),
-    ]),
-  )
-    .sort((first, second) => first.localeCompare(second, "es"))
-    .map((department) => ({ value: department, label: department })),
-];
-
-const activityNames = [
-  "Cultivo de cereales y otros cultivos n.c.p.",
-  "Cultivo de hortalizas y legumbres, especialidades hortícolas y productos de vivero",
-  "Cultivo de frutas, nueces, plantas cuyas hojas o frutos se utilizan para preparar bebidas, y especias",
-  "Cría de ganado vacuno y de ovejas, cabras, caballos, asnos, mulas y burdéganos",
-  "Cría de otros animales; elaboración de productos animales n.c.p.",
-  "Cultivo de productos agrícolas en combinación con la cría de animales (explotación mixta)",
-  "Actividades de servicios agrícolas y ganaderos, excepto las actividades veterinarias",
-  "Caza ordinaria y mediante trampas, y repoblación de animales de caza, incluso actividades conexas",
-  "Silvicultura, extracción de madera y actividades de servicios conexas",
-  "Pesca",
-  "Acuicultura",
-  "Producción, procesamiento y conservación de carne y productos cárnicos",
-  "Elaboración y conservación de pescado y productos de pescado",
-  "Elaboración y conservación de frutas, legumbres y hortalizas",
-  "Elaboración de aceites y grasas de origen vegetal y animal",
-  "Elaboración de productos lácteos",
-  "Elaboración de productos de molinería",
-  "Elaboración de alimentos preparados para animales",
-  "Venta al por mayor de alimentos, bebidas y tabaco",
-  "Investigaciones y desarrollo experimental en el campo de las ciencias naturales y la ingeniería",
-  "Actividades de la administración pública en general",
-  "Regulación de las actividades de organismos que prestan servicios sanitarios, educativos y sociales",
-  "Regulación y facilitación de la actividad económica",
-  "Actividades de servicios de apoyo para la administración pública en general",
-  "Relaciones exteriores",
-  "Actividades de defensa",
-  "Actividades de mantenimiento del orden público y de seguridad",
-  "Actividades de planes de seguridad social de afiliación obligatoria",
-  "Actividades veterinarias",
-];
-
-const activityOptions = [
-  { value: "all", label: "Todas las actividades" },
-  ...activityNames.map((activity) => ({ value: activity, label: activity })),
-];
-
 const normalizeSearchText = (value) =>
   String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es");
 
-const FilterSelect = ({ label, value, options, onChange }) => (
+const FilterSelect = ({ label, value, options, onChange, disabled = false }) => (
   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
     <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
       {label}
     </span>
     <select
       className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      disabled={disabled}
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
@@ -99,23 +41,101 @@ const FilterSelect = ({ label, value, options, onChange }) => (
 
 const DetailedView = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState({
+    units: [],
+    departments: [],
+    municipalities: [],
+    activities: [],
+  });
+  const [request, setRequest] = useState({ key: null, status: "loading" });
+  const [retryKey, setRetryKey] = useState(0);
   const [filters, setFilters] = useState(initialFilters);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeOptions[0]);
   const [searchResetKey, setSearchResetKey] = useState(0);
 
-  const filteredRecords = dashboardRecords.filter(
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getEconomicUnits(controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted) {
+          setData(result);
+          setRequest({ key: retryKey, status: "success" });
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setRequest({
+            key: retryKey,
+            status: "error",
+            message:
+              error.response?.data?.message ??
+              error.message ??
+              "No se pudieron cargar los datos del backend.",
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, [retryKey]);
+
+  const loading =
+    request.key !== retryKey || request.status === "loading";
+  const loadError =
+    request.key === retryKey && request.status === "error"
+      ? request.message
+      : "";
+  const departmentOptions = [
+    { value: "all", label: "Todos los departamentos" },
+    ...data.departments
+      .slice()
+      .sort((first, second) => first.name.localeCompare(second.name, "es"))
+      .map((department) => ({
+        value: String(department.id),
+        label: department.name,
+      })),
+  ];
+  const municipalityOptions = [
+    { value: "all", label: "Todos los municipios" },
+    ...data.municipalities
+      .filter(
+        (municipality) =>
+          filters.department === "all" ||
+          String(municipality.departmentId) === filters.department,
+      )
+      .slice()
+      .sort((first, second) => first.name.localeCompare(second.name, "es"))
+      .map((municipality) => ({
+        value: String(municipality.id),
+        label: municipality.name,
+      })),
+  ];
+  const activityOptions = [
+    { value: "all", label: "Todas las actividades" },
+    ...data.activities
+      .slice()
+      .sort((first, second) => first.name.localeCompare(second.name, "es"))
+      .map((activity) => ({
+        value: String(activity.ciiuId),
+        label: activity.name,
+      })),
+  ];
+
+  const filteredRecords = data.units.filter(
     (record) =>
       (!filters.name ||
         normalizeSearchText(record.name).includes(
           normalizeSearchText(filters.name),
         )) &&
         (filters.department === "all" ||
-          record.department === filters.department) &&
+          String(record.departmentId) === filters.department) &&
         (filters.municipality === "all" ||
-          record.municipality === filters.municipality) &&
+          String(record.municipalityId) === filters.municipality) &&
         (filters.activity === "all" ||
-          record.activity.includes(filters.activity)),
+          record.activities.some(
+            (activity) => String(activity.ciiuId) === filters.activity,
+          )),
   );
   const totalRecords = filteredRecords.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
@@ -132,6 +152,7 @@ const DetailedView = () => {
     setFilters((currentFilters) => ({
       ...currentFilters,
       [key]: value,
+      ...(key === "department" ? { municipality: "all" } : {}),
     }));
     setCurrentPage(1);
   };
@@ -170,27 +191,32 @@ const DetailedView = () => {
             value={filters.department}
             options={departmentOptions}
             onChange={updateFilter("department")}
+            disabled={loading || Boolean(loadError)}
           />
           <FilterSelect
             label="Municipio"
             value={filters.municipality}
             options={municipalityOptions}
             onChange={updateFilter("municipality")}
+            disabled={loading || Boolean(loadError)}
           />
           <FilterSelect
             label="Actividad económica"
             value={filters.activity}
             options={activityOptions}
             onChange={updateFilter("activity")}
+            disabled={loading || Boolean(loadError)}
           />
           <button
             className="h-11 shrink-0 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             type="button"
             disabled={
-              filters.name === initialFilters.name &&
-              filters.department === initialFilters.department &&
-              filters.municipality === initialFilters.municipality &&
-              filters.activity === initialFilters.activity
+              loading ||
+              Boolean(loadError) ||
+              (filters.name === initialFilters.name &&
+                filters.department === initialFilters.department &&
+                filters.municipality === initialFilters.municipality &&
+                filters.activity === initialFilters.activity)
             }
             onClick={() => {
               setFilters(initialFilters);
@@ -247,7 +273,32 @@ const DetailedView = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {pageRecords.length ? (
+              {loading ? (
+                <tr>
+                  <td
+                    className="px-5 py-10 text-center text-slate-500 dark:text-slate-300"
+                    colSpan={11}
+                  >
+                    Cargando unidades económicas...
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td
+                    className="px-5 py-10 text-center text-rose-700 dark:text-rose-300"
+                    colSpan={11}
+                  >
+                    <p>{loadError}</p>
+                    <button
+                      className="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
+                      type="button"
+                      onClick={() => setRetryKey((key) => key + 1)}
+                    >
+                      Reintentar
+                    </button>
+                  </td>
+                </tr>
+              ) : pageRecords.length ? (
                 pageRecords.map((record) => (
                   <tr
                     key={record.id}
@@ -320,6 +371,7 @@ const DetailedView = () => {
             <select
               aria-label="Cantidad de registros por página"
               className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-sm font-medium text-slate-800 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              disabled={loading || Boolean(loadError)}
               value={pageSize}
               onChange={(event) => {
                 setPageSize(Number(event.target.value));
