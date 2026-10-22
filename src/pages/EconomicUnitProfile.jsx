@@ -24,9 +24,7 @@ const formatField = (record, key) => {
 
 const EconomicUnitProfile = () => {
   const { id } = useParams();
-  const record = dashboardRecords.find(
-    (unit) => String(unit.id) === id,
-  );
+  const record = dashboardRecords.find((unit) => String(unit.id) === id);
 
   if (!record) {
     return (
@@ -80,17 +78,17 @@ const EconomicUnitProfile = () => {
               {record.name}
             </h1>
             <p className="m-0 text-sm text-slate-600 dark:text-slate-300">
-              {record.activity}
+              {record.activity || "Sin actividades económicas registradas"}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2.5 border-y border-slate-200 px-6 py-4 text-[13px] font-semibold text-slate-600 sm:px-8 dark:border-slate-700 dark:text-slate-300">
-          <span>{record.municipality}</span>
+          <span>{record.municipality || "Municipio no especificado"}</span>
           <span aria-hidden="true">·</span>
-          <span>{record.node}</span>
+          <span>{record.node || "Nodo no especificado"}</span>
           <span aria-hidden="true">·</span>
-          <span>{record.organization}</span>
+          <span>{record.organization || "Organización no especificada"}</span>
         </div>
 
         <section
