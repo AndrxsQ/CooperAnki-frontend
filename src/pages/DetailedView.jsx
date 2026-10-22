@@ -73,7 +73,7 @@ const activityOptions = [
 ];
 
 const normalizeSearchText = (value) =>
-  value
+  String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es");
@@ -110,12 +110,12 @@ const DetailedView = () => {
         normalizeSearchText(record.name).includes(
           normalizeSearchText(filters.name),
         )) &&
-      (filters.department === "all" ||
-        record.department === filters.department) &&
-      (filters.municipality === "all" ||
-        record.municipality === filters.municipality) &&
-      (filters.activity === "all" ||
-        record.activity.includes(filters.activity)),
+        (filters.department === "all" ||
+          record.department === filters.department) &&
+        (filters.municipality === "all" ||
+          record.municipality === filters.municipality) &&
+        (filters.activity === "all" ||
+          record.activity.includes(filters.activity)),
   );
   const totalRecords = filteredRecords.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
@@ -129,7 +129,10 @@ const DetailedView = () => {
   const lastVisibleRecord = Math.min(currentPage * pageSize, totalRecords);
 
   const updateFilter = (key) => (value) => {
-    setFilters((currentFilters) => ({ ...currentFilters, [key]: value }));
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      [key]: value,
+    }));
     setCurrentPage(1);
   };
 
@@ -278,7 +281,7 @@ const DetailedView = () => {
                       {record.node}
                     </td>
                     <td className="h-12 whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-200">
-                      {record.activity}
+                      {record.activity || "Sin actividades registradas"}
                     </td>
                     <td className="h-12 whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-200">
                       {record.address ?? "No especificada"}
