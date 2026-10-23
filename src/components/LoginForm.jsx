@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
@@ -133,12 +133,6 @@ export const LoginForm = () => {
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
-        <Link
-          to="/survey"
-          className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg border border-sky-700 px-4 text-sm font-semibold text-sky-800 transition hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-400 dark:text-sky-300 dark:hover:bg-slate-800 dark:focus-visible:outline-sky-400"
-        >
-          Ir a la encuesta
-        </Link>
       </section>
   );
 };

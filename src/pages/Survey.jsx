@@ -46,6 +46,8 @@ const Survey = () => {
   const [answers, setAnswers] = useState({});
   const [consent, setConsent] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [paymentFile, setPaymentFile] = useState(null);
+  const [paymentFileError, setPaymentFileError] = useState("");
   const steps = buildSurveySteps(answers);
 
   const isWelcome = step === -1;
@@ -62,7 +64,10 @@ const Survey = () => {
 
   const goNext = (event) => {
     event.preventDefault();
-    if (getValidationError(question, answer)) {
+    const hasAnswer = Array.isArray(answer)
+      ? answer.length > 0
+      : typeof answer === "string" && answer.trim().length > 0;
+    if (hasAnswer && getValidationError(question, answer)) {
       setShowValidation(true);
       return;
     }
@@ -79,7 +84,33 @@ const Survey = () => {
     setAnswers({});
     setConsent(false);
     setShowValidation(false);
+    setPaymentFile(null);
+    setPaymentFileError("");
     setStep(-1);
+  };
+
+  const handlePaymentFileChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setPaymentFile(null);
+      setPaymentFileError("");
+      return;
+    }
+
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    const allowedExtensions = /\.(pdf|jpe?g|png)$/i;
+    if (
+      !allowedTypes.includes(file.type) &&
+      !allowedExtensions.test(file.name)
+    ) {
+      setPaymentFile(null);
+      setPaymentFileError("Selecciona un archivo PDF, JPG o PNG.");
+      event.target.value = "";
+      return;
+    }
+
+    setPaymentFile(file);
+    setPaymentFileError("");
   };
 
   const selectUnknown = () => {
@@ -202,23 +233,77 @@ const Survey = () => {
             </div>
           </div>
         ) : isComplete ? (
-          <div className="flex flex-1 flex-col items-center justify-center text-center">
+          <div className="flex flex-1 flex-col justify-center">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-              Encuesta completada
+              Mensaje de cierre
             </p>
-            <h1 className="m-0 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-              Gracias por responder
+            <h1 className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Gracias por suministrar la información solicitada.
             </h1>
-            <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-              Las respuestas no se envían ni se guardan en esta versión.
-            </p>
-            <button
-              className={`${primaryButtonClass} mt-8`}
-              type="button"
-              onClick={restartSurvey}
-            >
-              Enviar Respuestas
-            </button>
+            <div className="mt-5 grid gap-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
+              <p className="m-0">
+                Si realizó el pago correspondiente al trámite de liquidación,
+                recuerde adjuntar el volante o comprobante para facilitar su
+                verificación.
+              </p>
+              <p className="m-0">
+                Una vez diligenciado el formulario, deberá comunicarse
+                directamente con las directivas de ASOCOLEMAD para coordinar la
+                revisión y las gestiones pertinentes.
+              </p>
+              <p className="m-0">
+                La información suministrada permitirá organizar el seguimiento
+                individual y facilitar la comunicación directa con el equipo
+                de cooperación.
+              </p>
+            </div>
+
+            <div className="mt-7 grid gap-2">
+              <label
+                className="text-sm font-semibold text-slate-800 dark:text-slate-100"
+                htmlFor="payment-receipt"
+              >
+                Adjuntar volante o comprobante de pago (opcional)
+              </label>
+              <input
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                className={`${fieldClass} file:mr-4 file:rounded-lg file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-sky-800 hover:file:bg-sky-200 dark:file:bg-sky-950 dark:file:text-sky-200 dark:hover:file:bg-sky-900`}
+                id="payment-receipt"
+                onChange={handlePaymentFileChange}
+                type="file"
+                aria-describedby="payment-receipt-help"
+              />
+              {paymentFile && (
+                <p className="m-0 text-sm text-slate-700 dark:text-slate-300">
+                  Archivo seleccionado: {paymentFile.name}
+                </p>
+              )}
+              {paymentFileError && (
+                <p
+                  aria-live="polite"
+                  className="m-0 text-sm font-medium text-rose-700 dark:text-rose-300"
+                >
+                  {paymentFileError}
+                </p>
+              )}
+              <p
+                className="m-0 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                id="payment-receipt-help"
+              >
+                Formatos permitidos: PDF, JPG o PNG. En esta versión, el archivo
+                solo queda seleccionado en esta sesión; no se carga ni se envía.
+              </p>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button
+                className={primaryButtonClass}
+                type="button"
+                onClick={restartSurvey}
+              >
+                Enviar Respuestas
+              </button>
+            </div>
           </div>
         ) : question ? (
           <>
