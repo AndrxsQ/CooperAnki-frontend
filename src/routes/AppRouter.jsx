@@ -5,7 +5,6 @@ import Dashboard from '../pages/Dashboard';
 import DetailedView from '../pages/DetailedView';
 import EconomicUnitProfile from '../pages/EconomicUnitProfile';
 import Login from '../pages/Login';
-import Register from '../pages/Register';
 import Landing from '../pages/Landing';
 import CallProposal from '../pages/CallProposal';
 import Searching from '../pages/Searching';
@@ -32,19 +31,18 @@ export const AppRouter = () => {
     <>
       <ScrollToTop />
       <Routes>
-        <Route element={<PublicDashboardLayout />}>
-          <Route path="/" element={<Dashboard />}/>
-          <Route path="/detailed-view" element={<DetailedView />}/>
-          <Route path="/economic-units/:id" element={<EconomicUnitProfile />}/>
-          <Route path="/legal-management" element={<LegalHome />}/>
-          <Route path="/legal-management/clients" element={<LegalClients />}/>
-          <Route path="/legal-management/cases/*" element={<LegalCases />}/>
-        </Route>
-
+        <Route path="/login" element={<Login />}/>
         <Route element={<ProtectedRoute />}>
+          <Route element={<PublicDashboardLayout />}>
+            <Route path="/" element={<Dashboard />}/>
+            <Route path="/detailed-view" element={<DetailedView />}/>
+            <Route path="/economic-units/:id" element={<EconomicUnitProfile mode="territorial" />}/>
+            <Route path="/legal-management" element={<LegalHome />}/>
+            <Route path="/legal-management/clients" element={<LegalClients />}/>
+            <Route path="/legal-management/clients/:id" element={<EconomicUnitProfile mode="legal" />}/>
+            <Route path="/legal-management/cases/*" element={<LegalCases />}/>
+          </Route>
           <Route path="/landing" element={<Landing />}/>
-          <Route path="/login" element={<Login />}/>
-          <Route path="/register" element={<Register />}/>
 
           <Route element={<MainLayout />}>
             <Route path="/callProposal" element={<CallProposal />}/>

@@ -9,6 +9,7 @@ export const Header = ({
   onLogin,
   onToggleTheme,
   loginLabel,
+  hideAccount = false,
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -37,7 +38,7 @@ export const Header = ({
             >
               {loginLabel}
             </button>
-          ) : (
+          ) : !hideAccount ? (
             <div
               className="flex items-center gap-2.5 text-slate-900 dark:text-slate-100"
               aria-label="Usuario actual"
@@ -54,6 +55,15 @@ export const Header = ({
                 </span>
               </span>
             </div>
+          ) : null}
+          {user && onLogout && (
+            <button
+              className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-200"
+              type="button"
+              onClick={onLogout}
+            >
+              Cerrar sesión
+            </button>
           )}
           <button
             aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
