@@ -15,6 +15,7 @@ import PublicDashboardLayout from '../components/PublicDashboardLayout';
 import LegalClients from '../pages/LegalClients';
 import LegalCases from '../pages/LegalCases';
 import LegalHome from '../pages/LegalHome';
+import Survey from '../pages/Survey';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -32,6 +33,7 @@ export const AppRouter = () => {
       <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />}/>
+        <Route path="/survey" element={<Survey />}/>
         <Route element={<ProtectedRoute />}>
           <Route element={<PublicDashboardLayout />}>
             <Route path="/" element={<Dashboard />}/>
