@@ -27,7 +27,7 @@ export const LoginForm = () => {
     setServerError(''); // Limpiamos errores previos
     try {
       // data coincide con LoginRequest del backend: { username, password }
-      const response = await api.post('/auth/login', data, { timeout: 0 });
+      const response = await api.post('/auth/login', data);
 
       login(response.data);
 
