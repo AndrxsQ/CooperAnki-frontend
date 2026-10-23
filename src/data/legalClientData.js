@@ -1,4 +1,3 @@
-const responsibleLawyers = ["Laura Méndez", "Andrés Torres", "Camila Ríos"];
 const caseStatuses = ["En curso", "Pendiente", "Cerrado"];
 
 export const createTemporaryLegalClients = (units) => {
@@ -18,7 +17,7 @@ export const createTemporaryLegalClients = (units) => {
       caseNumber: `EXP-${today.getFullYear()}-${sequence}`,
       filingNumber: `11001-31-03-${String((index % 10) + 1).padStart(3, "0")}-${today.getFullYear()}-${sequence}`,
       status: caseStatuses[index % caseStatuses.length],
-      responsible: responsibleLawyers[index % responsibleLawyers.length],
+      responsible: "ASOCOLEMAD",
       lastActivityAt: activityDate.toISOString().slice(0, 10),
     };
   });
