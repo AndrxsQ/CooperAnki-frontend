@@ -1,0 +1,508 @@
+const yesNo = ["Sí", "No"];
+const months = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+export const surveyDepartments = [
+  "Amazonas",
+  "Antioquia",
+  "Arauca",
+  "Atlántico",
+  "Bogotá, D. C.",
+  "Bolívar",
+  "Boyacá",
+  "Caldas",
+  "Caquetá",
+  "Casanare",
+  "Cauca",
+  "Cesar",
+  "Chocó",
+  "Córdoba",
+  "Cundinamarca",
+  "Guainía",
+  "Guaviare",
+  "Huila",
+  "La Guajira",
+  "Magdalena",
+  "Meta",
+  "Nariño",
+  "Norte de Santander",
+  "Putumayo",
+  "Quindío",
+  "Risaralda",
+  "San Andrés, Providencia y Santa Catalina",
+  "Santander",
+  "Sucre",
+  "Tolima",
+  "Valle del Cauca",
+  "Vaupés",
+  "Vichada",
+];
+
+const municipalitiesByDepartment = {
+  Amazonas: ["Leticia", "Puerto Nariño"],
+  Antioquia: ["Medellín", "Apartadó", "Bello", "Envigado", "Turbo"],
+  Arauca: ["Arauca", "Arauquita", "Saravena"],
+  Atlántico: ["Barranquilla", "Baranoa", "Malambo", "Soledad"],
+  "Bogotá, D. C.": ["Bogotá"],
+  Bolívar: ["Cartagena", "Magangué", "Turbaco"],
+  Boyacá: ["Tunja", "Duitama", "Sogamoso"],
+  Caldas: ["Manizales", "Chinchiná", "La Dorada"],
+  Caquetá: ["Florencia", "San Vicente del Caguán"],
+  Casanare: ["Yopal", "Aguazul", "Villanueva"],
+  Cauca: ["Popayán", "Santander de Quilichao"],
+  Cesar: ["Valledupar", "Aguachica", "Bosconia"],
+  Chocó: ["Quibdó", "Istmina"],
+  Córdoba: ["Montería", "Cereté", "Lorica"],
+  Cundinamarca: ["Soacha", "Facatativá", "Girardot", "Zipaquirá"],
+  Guainía: ["Inírida"],
+  Guaviare: ["San José del Guaviare"],
+  Huila: ["Neiva", "Garzón", "Pitalito"],
+  "La Guajira": ["Riohacha", "Maicao", "Uribia"],
+  Magdalena: [
+    "Santa Marta",
+    "Puebloviejo",
+    "Ciénaga",
+    "Pivijay",
+    "El Retén",
+    "Aracataca",
+    "Fundación",
+    "Zona Bananera",
+  ],
+  Meta: ["Villavicencio", "Acacías", "Granada"],
+  Nariño: ["Pasto", "Ipiales", "Tumaco"],
+  "Norte de Santander": ["Cúcuta", "Ocaña", "Pamplona"],
+  Putumayo: ["Mocoa", "Puerto Asís"],
+  Quindío: ["Armenia", "Calarcá", "Montenegro"],
+  Risaralda: ["Pereira", "Dosquebradas", "Santa Rosa de Cabal"],
+  "San Andrés, Providencia y Santa Catalina": ["San Andrés", "Providencia"],
+  Santander: ["Bucaramanga", "Barrancabermeja", "Floridablanca"],
+  Sucre: ["Sincelejo", "Corozal", "Sampués"],
+  Tolima: ["Ibagué", "Espinal", "Chaparral"],
+  "Valle del Cauca": ["Cali", "Buenaventura", "Palmira", "Tuluá"],
+  Vaupés: ["Mitú"],
+  Vichada: ["Puerto Carreño"],
+};
+
+const step = (id, section, title, type, options, extra = {}) => ({
+  id,
+  section,
+  title,
+  type,
+  options,
+  allowUnknown: true,
+  ...extra,
+});
+
+const text = (id, section, title, extra = {}) =>
+  step(id, section, title, "text", null, extra);
+const number = (id, section, title, extra = {}) =>
+  step(id, section, title, "number", null, extra);
+const textarea = (id, section, title, extra = {}) =>
+  step(id, section, title, "textarea", null, extra);
+const select = (id, section, title, options, extra = {}) =>
+  step(id, section, title, "select", options, extra);
+const radio = (id, section, title, options, extra = {}) =>
+  step(id, section, title, "radio", options, extra);
+const multi = (id, section, title, options, extra = {}) =>
+  step(id, section, title, "multi", options, extra);
+
+const getCount = (answers, id) => {
+  const count = Number.parseInt(answers[id], 10);
+  return Number.isFinite(count) ? Math.min(Math.max(count, 0), 30) : 0;
+};
+
+const familyMemberName = (answers, index) =>
+  answers[`household.${index}.name`] || `Integrante ${index + 1}`;
+
+export const getHouseholdMembers = (answers) => [
+  "Usted (mujer lideresa)",
+  ...Array.from({ length: getCount(answers, "17") }, (_, index) =>
+    familyMemberName(answers, index),
+  ),
+];
+
+const addOtherText = (steps, answers, id, section, title, trigger) => {
+  if (answers[id] === trigger) {
+    steps.push(
+      text(`${id}.other`, section, title, {
+        placeholder: "Especifique",
+      }),
+    );
+  }
+};
+
+export const buildSurveySteps = (answers) => {
+  const steps = [];
+  const profile = "Perfil de la mujer lideresa";
+  const household = "Composición y aportes de la unidad económica familiar";
+  const income = "Fuentes de ingresos familiares";
+  const skills = "Actividades productivas, oficios y servicios profesionales";
+  const business = "Negocio actual y modalidad empresarial";
+  const assets = "Activos e infraestructura productiva";
+
+  steps.push(
+    number("1", profile, "Número de identificación"),
+    text("2", profile, "Nombre completo"),
+    number("3", profile, "Rango de edad", { min: 0, max: 120 }),
+    number("4", profile, "Número de teléfono"),
+    text("5", profile, "Correo electrónico", { inputType: "email" }),
+    select("6", profile, "Nivel de escolaridad", [
+      "Sin escolaridad formal",
+      "Primaria",
+      "Secundaria",
+      "Técnica o tecnológica",
+      "Universitaria/Profesional",
+      "Otra",
+    ]),
+    select("7", profile, "Departamento donde vive", surveyDepartments, {
+      helperText: "Catálogo estático temporal.",
+    }),
+  );
+
+  const selectedDepartment = answers["7"];
+  const municipalities = municipalitiesByDepartment[selectedDepartment] ?? [];
+  steps.push(
+    select(
+      "8",
+      profile,
+      "Municipio donde vive",
+      [...municipalities, "Otro / no aparece en la lista"],
+      {
+        disabled:
+          !selectedDepartment ||
+          selectedDepartment === "No sabe / No responde",
+        helperText:
+          "Catálogo estático temporal. Si el municipio no aparece, selecciona “Otro / no aparece en la lista”.",
+      },
+    ),
+  );
+  addOtherText(
+    steps,
+    answers,
+    "8",
+    profile,
+    "Especifique el municipio",
+    "Otro / no aparece en la lista",
+  );
+  steps.push(
+    text("9", profile, "Corregimiento / Vereda / Barrio donde vive (si aplica)"),
+    radio("10", profile, "¿Sabe leer, escribir y realizar cálculos básicos para manejar su negocio?", [
+      "Sí",
+      "Con apoyo",
+      "No",
+      "Prefiere no responder",
+    ]),
+    textarea("11", profile, "¿Cuál es su ocupación o actividad económica principal?"),
+    radio("12", profile, "¿Cuánto tiempo de experiencia tiene en esta actividad?", [
+      "Menos de 1 año",
+      "1–3 años",
+      "4–10 años",
+      "Más de 10 años",
+    ]),
+    textarea("13", profile, "¿Qué labores o actividades realiza personalmente (producción, compras, ventas, cuentas, administración u otras)?"),
+    textarea("14", profile, "¿Ha liderado algún negocio, grupo, asociación o actividad comunitaria? Describa:"),
+    text("15", profile, "¿Cuánto tiempo por semana puede dedicar al negocio o formación?"),
+    textarea("16", profile, "¿Tiene alguna actividad de pasatiempo u ocio?"),
+  );
+
+  steps.push(
+    number("17", household, "¿Cuántos integrantes tiene su hogar además de usted?", {
+      min: 0,
+      max: 30,
+      helperText: "Si no hay otras personas en el hogar, ingrese 0.",
+    }),
+  );
+  const householdCount = getCount(answers, "17");
+  for (let index = 0; index < householdCount; index += 1) {
+    const prefix = `household.${index}`;
+    const member = `integrante ${index + 1}`;
+    steps.push(
+      text(`${prefix}.name`, household, `17.${index + 1}.1. Nombre completo de ${member}`),
+      number(`${prefix}.identification`, household, `17.${index + 1}.2. Número de identificación de ${member}`),
+      number(`${prefix}.age`, household, `17.${index + 1}.3. Edad de ${member}`, { min: 0, max: 120 }),
+      select(`${prefix}.kinship`, household, `17.${index + 1}.4. Parentesco de ${member}`, [
+        "Hijo o Hija",
+        "Padre",
+        "Madre",
+        "Abuelo o Abuela",
+        "Nieto o Nieta",
+        "Tío o tía",
+        "Otro",
+      ]),
+    );
+    addOtherText(
+      steps,
+      answers,
+      `${prefix}.kinship`,
+      household,
+      `Especifique el parentesco de ${member}`,
+      "Otro",
+    );
+    steps.push(
+      textarea(`${prefix}.occupation`, household, `18.${index + 1}.1. Ocupación o fuente de ingreso de ${member}`),
+      number(`${prefix}.contribution`, household, `18.${index + 1}.2. Aporte monetario aproximado al mes (COP) de ${member}`, { min: 0 }),
+      textarea(`${prefix}.nonMonetary`, household, `18.${index + 1}.3. Aportes no monetarios (trabajo, cuidados, activos, contactos) de ${member}`),
+    );
+  }
+
+  const members = getHouseholdMembers(answers);
+  steps.push(
+    multi("19.people", household, "¿Quiénes colaboran actualmente en las actividades económicas familiares?", [
+      ...members,
+      "Nadie actualmente",
+    ]),
+    textarea("19.tasks", household, "¿En qué tareas colaboran?"),
+    multi("20.people", household, "¿Quién asume tareas de cuidado, cocina, limpieza y apoyo doméstico?", members),
+    number("20.hours", household, "¿Aproximadamente cuántas horas semanales se dedican a estas tareas?", { min: 0 }),
+    radio("21", household, "¿Hay actividades económicas que comparten varias personas de la familia?", yesNo),
+  );
+  if (answers["21"] === "Sí") {
+    steps.push(
+      multi("21.1.people", household, "¿Quiénes participan?", members),
+      textarea("21.1.details", household, "¿Cómo se dividen las responsabilidades y los pagos?"),
+    );
+  }
+
+  steps.push(
+    number("22", income, "¿Cuántas fuentes de ingreso tiene el hogar?", {
+      min: 0,
+      max: 30,
+      helperText: "Si no hay fuentes de ingreso, ingrese 0.",
+    }),
+  );
+  const incomeCount = getCount(answers, "22");
+  for (let index = 0; index < incomeCount; index += 1) {
+    const prefix = `income.${index}`;
+    const sourceLabel = `fuente de ingreso ${index + 1}`;
+    steps.push(
+      text(`${prefix}.source`, income, `22.${index + 1}.1. ¿Cuál es la fuente de ingreso?`),
+      number(`${prefix}.member`, income, `22.${index + 1}.2. Número del integrante que genera el ingreso`, { min: 0 }),
+      number(`${prefix}.amount`, income, `22.${index + 1}.3. Monto del ingreso (COP)`, { min: 0 }),
+      select(`${prefix}.frequency`, income, `22.${index + 1}.4. Frecuencia del ingreso`, [
+        "Diaria",
+        "Semanal",
+        "Mensual",
+        "Por temporada",
+        "Otra",
+      ]),
+    );
+    addOtherText(
+      steps,
+      answers,
+      `${prefix}.frequency`,
+      income,
+      `Especifique la frecuencia de ${sourceLabel}`,
+      "Por temporada",
+    );
+    addOtherText(
+      steps,
+      answers,
+      `${prefix}.frequency`,
+      income,
+      `¿Cuál otra frecuencia tiene ${sourceLabel}?`,
+      "Otra",
+    );
+    steps.push(
+      select(`${prefix}.type`, income, `22.${index + 1}.5. Tipo de ingreso`, [
+        "Venta",
+        "Ganancia",
+        "Salario",
+      ]),
+    );
+  }
+
+  steps.push(
+    multi("23.months", income, "¿En qué meses del año aumentan o disminuyen los ingresos familiares?", months),
+    textarea("23.why", income, "¿Por qué aumentan o disminuyen los ingresos en esos meses?"),
+    radio("24", income, "¿La familia tiene otras fuentes, como transferencias, remesas o arriendos?", yesNo),
+  );
+  if (answers["24"] === "Sí") {
+    steps.push(
+      textarea("24.1.source", income, "¿Cuál(es) es(son) la(s) fuente(s) de ingreso extra?"),
+      number("24.1.amount", income, "Monto aproximado de los ingresos extra (COP)", { min: 0 }),
+    );
+  }
+  steps.push(
+    number("25.amount", income, "Estimación de ingreso neto familiar total promedio por mes (COP)", { min: 0 }),
+    select("25.status", income, "Calidad de la estimación de ingreso", [
+      "Comprobado",
+      "Estimado",
+      "No disponible",
+    ]),
+    textarea("26.detail", income, "¿Qué ingresos controla o recibe directamente usted como mujer? Describa las fuentes:"),
+    number("26.amount", income, "Monto aproximado mensual de esos ingresos (COP)", { min: 0 }),
+  );
+
+  steps.push(
+    radio("27.self.hasTrade", skills, "27.1. ¿Tiene un oficio o profesión?", [
+      "Sí",
+      "No",
+    ]),
+  );
+  if (answers["27.self.hasTrade"] === "Sí") {
+    steps.push(
+      text("27.self.trade", skills, "¿Cuál es su oficio o profesión?"),
+      number("27.self.years", skills, "27.2. Años de experiencia", { min: 0 }),
+      textarea("27.self.training", skills, "27.3. Formación o certificación"),
+      radio("27.self.sells", skills, "27.4. ¿Actualmente vende o presta el servicio?", yesNo),
+    );
+  }
+  for (let index = 0; index < householdCount; index += 1) {
+    const prefix = `27.household.${index}`;
+    const member = familyMemberName(answers, index);
+    steps.push(
+      radio(`${prefix}.hasTrade`, skills, `¿${member} tiene un oficio o profesión?`, yesNo),
+    );
+    if (answers[`${prefix}.hasTrade`] === "Sí") {
+      steps.push(
+        text(`${prefix}.trade`, skills, `¿Cuál es el oficio o profesión de ${member}?`),
+        number(`${prefix}.years`, skills, `Años de experiencia de ${member}`, { min: 0 }),
+        textarea(`${prefix}.training`, skills, `Formación o certificación de ${member}`),
+        radio(`${prefix}.sells`, skills, `¿${member} actualmente vende o presta el servicio?`, yesNo),
+      );
+    }
+  }
+  steps.push(
+    textarea("28", skills, "¿Cuáles son sus conocimientos y habilidades más fuertes?"),
+    textarea("29", skills, "¿Cuáles capacidades o habilidades familiares podrían ofrecerse a la red empresarial o a otros clientes?"),
+    textarea("30", skills, "¿Qué servicios necesita el hogar contratar para producir o vender (transporte, contabilidad, reparación, diseño, etc.)?"),
+    textarea("31", skills, "¿Qué servicios profesionales requieren habilitación, permiso o acreditación antes de prestarse?"),
+    select("32", business, "Situación actual", [
+      "Tiene negocio funcionando",
+      "Trabaja por cuenta propia sin negocio formal",
+      "Tiene idea de negocio",
+      "No realiza actividad económica",
+    ]),
+    select("33", business, "Modalidad actual", [
+      "Individual",
+      "Familiar",
+      "Asociativa",
+      "Mixta",
+      "Sin definir",
+    ]),
+    textarea("34", business, "¿Qué bienes o servicios ofrece? Menciónelos de mayor a menor importancia"),
+    select("35", business, "¿Dónde opera?", [
+      "Hogar",
+      "Local propio",
+      "Local arrendado",
+      "Espacio compartido",
+      "Itinerante",
+      "Otro",
+    ]),
+  );
+  addOtherText(
+    steps,
+    answers,
+    "35",
+    business,
+    "Especifique dónde opera",
+    "Otro",
+  );
+  steps.push(
+    radio("36", business, "¿Tiene registros de compras, ventas, gastos o inventario?", [
+      "Sí",
+      "Parciales",
+      "No",
+    ]),
+    radio("37", business, "¿Tiene formalización o permisos aplicables?", yesNo),
+  );
+  if (answers["37"] === "Sí") {
+    steps.push(textarea("37.details", business, "¿Cuáles formalizaciones o permisos tiene?"));
+  }
+  steps.push(
+    radio("38", business, "Si trabaja asociada, ¿existen acuerdos escritos sobre aportes, pagos, uso de equipos y decisiones?", [
+      "Sí",
+      "No",
+      "No aplica",
+    ]),
+    number("39", assets, "¿Cuántos activos, espacios o herramientas tiene para operar?", {
+      min: 0,
+      max: 50,
+      helperText: "Si no cuenta con activos, ingrese 0.",
+    }),
+  );
+
+  const assetCount = getCount(answers, "39");
+  for (let index = 0; index < assetCount; index += 1) {
+    const prefix = `asset.${index}`;
+    const assetName = answers[`${prefix}.name`] || `activo ${index + 1}`;
+    steps.push(
+      text(`${prefix}.name`, assets, `39.${index + 1}.1. Nombre del activo o herramienta`),
+      number(`${prefix}.quantity`, assets, `39.${index + 1}.2. Cantidad`, { min: 1 }),
+      select(`${prefix}.condition`, assets, `39.${index + 1}.3. Estado`, [
+        "Muy bueno",
+        "Bueno",
+        "Regular",
+        "Malo",
+        "Muy malo",
+      ]),
+      select(`${prefix}.use`, assets, `39.${index + 1}.4. Tipo de uso`, [
+        "Personal",
+        "Familiar",
+        "Alquilado",
+        "Prestado",
+        "Otro",
+      ]),
+    );
+    addOtherText(
+      steps,
+      answers,
+      `${prefix}.use`,
+      assets,
+      `Especifique el tipo de uso de ${assetName}`,
+      "Otro",
+    );
+    steps.push(
+      textarea(`${prefix}.function`, assets, `39.${index + 1}.5. Función actual de ${assetName}`),
+      textarea(`${prefix}.improvement`, assets, `39.${index + 1}.6. Mejora necesaria para ${assetName}`),
+    );
+  }
+  steps.push(
+    multi("40", assets, "Seleccione los recursos con los que cuenta adecuadamente para operar su actividad", [
+      "Agua potable",
+      "Energía",
+      "Conectividad",
+      "Almacenamiento",
+      "Saneamiento",
+      "Ninguno de los anteriores",
+    ]),
+  );
+  if (assetCount > 0) {
+    for (let index = 0; index < assetCount; index += 1) {
+      const prefix = `41.${index}`;
+      const assetName = answers[`asset.${index}.name`] || `Activo ${index + 1}`;
+      steps.push(
+        radio(prefix, assets, `41. ¿El activo "${assetName}" puede compartirse o prestarse?`, yesNo),
+      );
+    }
+  } else {
+    steps.push(
+      radio("41.none", assets, "41. No se registraron activos para clasificar. ¿Confirma que no hay activos que puedan compartirse o deban permanecer bajo control individual o familiar?", [
+        "Confirmo",
+        "No sabe / No responde",
+      ], { allowUnknown: false }),
+    );
+  }
+  steps.push(
+    textarea("42", assets, "¿Qué infraestructura o equipo falta para vender u ofrecer el servicio con calidad y seguridad?"),
+  );
+
+  return steps;
+};
+
+export const getMunicipalityOptions = (department) =>
+  municipalitiesByDepartment[department] ?? [];
+
+export const isUnknownAnswer = (answer) => answer === "No sabe / No responde";

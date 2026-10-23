@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/useTheme";
 import { Header } from "./Header";
 import Sidebar from "./Sidebar";
 
 const PublicDashboardLayout = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -22,6 +28,7 @@ const PublicDashboardLayout = () => {
         <Header
           variant="landing"
           user={isAuthenticated ? user : null}
+          onLogout={handleLogout}
           isDark={isDark}
           onToggleTheme={toggleTheme}
           onOpenSidebar={() => setSidebarOpen(true)}

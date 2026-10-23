@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import { getEconomicUnits } from "../api/economicUnits";
+import { createTemporaryLegalClients } from "../data/legalClientData";
 
 const pageSizeOptions = [10, 25, 50];
 const numberFormatter = new Intl.NumberFormat("es-CO");
@@ -9,37 +11,12 @@ const dateFormatter = new Intl.DateTimeFormat("es-CO", {
   month: "short",
   year: "numeric",
 });
-const responsibleLawyers = ["Laura Méndez", "Andrés Torres", "Camila Ríos"];
-const caseStatuses = ["En curso", "Pendiente", "Cerrado"];
 
 const normalizeSearchText = (value) =>
   String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("es");
-
-const createTemporaryLegalData = (units) => {
-  const sortedUnits = [...units].sort((first, second) =>
-    String(first.name ?? "").localeCompare(String(second.name ?? ""), "es"),
-  );
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-
-  return sortedUnits.map((unit, index) => {
-    const sequence = String(index + 1).padStart(4, "0");
-    const activityDate = new Date(today);
-    activityDate.setDate(today.getDate() - index * 2);
-
-    return {
-      ...unit,
-      caseNumber: `EXP-${today.getFullYear()}-${sequence}`,
-      filingNumber: `11001-31-03-${String((index % 10) + 1).padStart(3, "0")}-${today.getFullYear()}-${sequence}`,
-      status: caseStatuses[index % caseStatuses.length],
-      responsible: responsibleLawyers[index % responsibleLawyers.length],
-      lastActivityAt: activityDate.toISOString().slice(0, 10),
-    };
-  });
-};
 
 const FilterSelect = ({ label, value, options, onChange, disabled }) => (
   <label className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -62,6 +39,7 @@ const FilterSelect = ({ label, value, options, onChange, disabled }) => (
 );
 
 const LegalClients = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [request, setRequest] = useState({ key: null, status: "loading" });
   const [retryKey, setRetryKey] = useState(0);
@@ -78,7 +56,7 @@ const LegalClients = () => {
     getEconomicUnits(controller.signal)
       .then(({ units }) => {
         if (!controller.signal.aborted) {
-          setClients(createTemporaryLegalData(units));
+          setClients(createTemporaryLegalClients(units));
           setRequest({ key: retryKey, status: "success" });
         }
       })
@@ -298,7 +276,19 @@ const LegalClients = () => {
                 pageClients.map((client) => (
                   <tr
                     key={client.id}
-                    className="h-12 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                    aria-label={`Ver perfil jurídico de ${client.name}`}
+                    className="h-12 cursor-pointer transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-sky-700 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800"
+                    onClick={() =>
+                      navigate(`/legal-management/clients/${client.id}`)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/legal-management/clients/${client.id}`);
+                      }
+                    }}
+                    role="link"
+                    tabIndex={0}
                   >
                     <td className="h-12 whitespace-nowrap px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
                       {client.name || "Nombre no especificado"}
