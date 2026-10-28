@@ -134,7 +134,11 @@ export const getHouseholdMembers = (answers) => [
 ];
 
 const addOtherText = (steps, answers, id, section, title, trigger) => {
-  if (answers[id] === trigger) {
+  const answer = answers[id];
+  if (
+    answer === trigger ||
+    (Array.isArray(answer) && answer.includes(trigger))
+  ) {
     steps.push(
       text(`${id}.other`, section, title, {
         placeholder: "Especifique",
@@ -476,7 +480,6 @@ export const buildSurveySteps = (answers) => {
       "Conectividad",
       "Almacenamiento",
       "Saneamiento",
-      "Ninguno de los anteriores",
     ]),
   );
   if (assetCount > 0) {
@@ -487,17 +490,209 @@ export const buildSurveySteps = (answers) => {
         radio(prefix, assets, `41. ¿El activo "${assetName}" puede compartirse o prestarse?`, yesNo),
       );
     }
-  } else {
-    steps.push(
-      radio("41.none", assets, "41. No se registraron activos para clasificar. ¿Confirma que no hay activos que puedan compartirse o deban permanecer bajo control individual o familiar?", [
-        "Confirmo",
-        "No sabe / No responde",
-      ], { allowUnknown: false }),
-    );
   }
   steps.push(
     textarea("42", assets, "¿Qué infraestructura o equipo falta para vender u ofrecer el servicio con calidad y seguridad?"),
   );
+
+  const finances = "Ventas, costos y resultados del negocio";
+  const marketing = "Compradores, proveedores y comercialización";
+  const governance = "Gobernanza, autonomía económica y asociatividad";
+  const training = "Necesidades, inversiones y formación";
+  const valueChain = "Potencial de encadenamiento productivo y de servicios";
+  const legal = "Aspecto jurídico";
+
+  steps.push(
+    text("43.name", finances, "Nombre del negocio"),
+    text("43.period", finances, "Periodo observado"),
+    number("44.sales", finances, "Monto de ventas promedio durante el periodo (COP)", { min: 0 }),
+    text("44.quantity", finances, "Cantidad de unidades o servicios vendidos"),
+  );
+
+  const expenseCategories = [
+    ["rawMaterials", "Materias primas"],
+    ["packaging", "Empaques"],
+    ["transport", "Transporte"],
+    ["utilities", "Energía y servicios"],
+    ["maintenance", "Mantenimiento"],
+    ["paidLabor", "Mano de obra remunerada"],
+    ["other", "Otros costos"],
+  ];
+  expenseCategories.forEach(([id, label]) => {
+    steps.push(
+      text(`45.${id}.name`, finances, `Nombre del gasto de ${label.toLowerCase()}`),
+      number(`45.${id}.amount`, finances, `Monto promedio del costo o gasto de ${label.toLowerCase()} (COP)`, { min: 0 }),
+    );
+  });
+
+  steps.push(
+    text("46.name", finances, "Nombre del trabajo familiar no remunerado"),
+    textarea("46.performer", finances, "¿Quién realiza el trabajo familiar no remunerado?"),
+    text("46.amount", finances, "¿Cuánto considera que se debería remunerar este trabajo?"),
+    number("47.profit", finances, "Monto estimado de la ganancia neta durante el periodo (COP)", { min: 0 }),
+    radio("47.usedAtHome", finances, "¿La ganancia se usa para el hogar?", yesNo),
+    number("48.debt", finances, "Monto total en deudas del negocio (COP)", { min: 0 }),
+
+    multi("49.buyers", marketing, "¿Quién compra sus productos o servicios?", [
+      "Vecinos o hogares",
+      "Restaurantes",
+      "Comercios",
+      "Turistas",
+      "Empresas",
+      "Instituciones",
+      "Otros",
+    ]),
+  );
+  addOtherText(steps, answers, "49.buyers", marketing, "Especifique otros compradores", "Otros");
+  steps.push(
+    multi("50.channels", marketing, "¿Cómo consigue clientes?", [
+      "Recomendación",
+      "WhatsApp",
+      "Redes sociales",
+      "Punto físico",
+      "Intermediarios",
+      "Ferias",
+      "Otro",
+    ]),
+  );
+  addOtherText(steps, answers, "50.channels", marketing, "Especifique otro medio para conseguir clientes", "Otro");
+  steps.push(
+    text("51.product", marketing, "¿Cuál de sus productos o servicios vende con mayor frecuencia?"),
+    number("51.price", marketing, "¿Qué precio tiene por unidad? (COP)", { min: 0 }),
+    text("51.quantity", marketing, "¿Cuántas unidades vende?"),
+    textarea("52", marketing, "¿Cuáles son sus tres principales dificultades para vender y cobrar?"),
+    textarea("53", marketing, "¿Dónde consigue los insumos?"),
+    textarea("54", marketing, "¿Cómo transporta o entrega los productos o servicios?"),
+    radio("55", marketing, "¿Conoce o utiliza herramientas digitales para comercializar?", [
+      "Sí",
+      "Con apoyo",
+      "No",
+    ]),
+  );
+
+  const decisionOptions = [...members, "Otra persona"];
+  steps.push(
+    select("56.decisions", governance, "¿Quién decide los precios, las compras, las ventas y las inversiones del negocio?", decisionOptions),
+  );
+  addOtherText(steps, answers, "56.decisions", governance, "¿Quién decide?", "Otra persona");
+  steps.push(
+    select("57.payments", governance, "¿Quién recibe los pagos, administra el dinero y decide cómo usar la ganancia?", decisionOptions),
+  );
+  addOtherText(steps, answers, "57.payments", governance, "¿Quién recibe y administra el dinero?", "Otra persona");
+  steps.push(
+    radio("58", governance, "¿Le interesa trabajar con otras mujeres o familias?", [
+      "Sí",
+      "Tal vez",
+      "No",
+    ]),
+    multi("59", governance, "¿Qué preferiría compartir?", [
+      "Compras",
+      "Equipos",
+      "Local",
+      "Transporte",
+      "Publicidad",
+      "Ventas",
+      "Capacitación",
+      "Nada por ahora",
+    ]),
+    multi("60", governance, "¿Qué preocupaciones tendría al asociarse?", [
+      "Pagos",
+      "Confianza",
+      "Decisiones",
+      "Horarios",
+      "Propiedad",
+      "Otras",
+    ]),
+  );
+  addOtherText(steps, answers, "60", governance, "¿Qué otras preocupaciones tendría al asociarse?", "Otras");
+  steps.push(
+    textarea("61", governance, "¿Qué condiciones necesitaría para participar sin aumentar excesivamente su carga de trabajo?"),
+
+    multi("62", training, "¿Cuáles son sus necesidades prioritarias?", [
+      "Capital de trabajo",
+      "Equipo",
+      "Infraestructura",
+      "Permisos",
+      "Clientes",
+      "Transporte",
+      "Formación",
+      "Asesoría",
+      "Otra",
+    ]),
+  );
+  addOtherText(steps, answers, "62", training, "Especifique otra necesidad prioritaria", "Otra");
+  steps.push(
+    multi("63.topics", training, "¿En qué temas desea formarse? (Seleccione los que apliquen)", [
+      "Costos y precios",
+      "Contabilidad",
+      "Ventas y marketing",
+      "Calidad",
+      "Tecnología",
+      "Liderazgo",
+      "Servicio al cliente",
+      "Otro",
+    ]),
+  );
+  addOtherText(steps, answers, "63.topics", training, "Especifique otro tema de formación", "Otro");
+  steps.push(
+    multi("63.format", training, "¿Cómo puede participar mejor en la formación? (Seleccione las opciones que apliquen)", [
+      "Presencial",
+      "Práctica en negocio",
+      "Grupos pequeños",
+      "Apoyo visual",
+      "Acompañamiento individual",
+    ]),
+    radio("63.goal", training, "¿Tiene una meta concreta de ingresos o de crecimiento para los próximos 12 meses?", yesNo),
+  );
+  if (answers["63.goal"] === "Sí") {
+    steps.push(textarea("63.goal.details", training, "Describa su meta de ingresos o crecimiento"));
+  }
+
+  steps.push(
+    multi("64", valueChain, "¿En cuáles líneas desea participar?", [
+      "Pesca y transformación",
+      "Gastronomía",
+      "Turismo cultural",
+      "Artesanías",
+      "Servicios u oficios complementarios",
+    ]),
+    textarea("65.offer", valueChain, "¿Qué podría ofrecer a otras unidades?"),
+    textarea("65.purchase", valueChain, "¿Qué necesitaría comprar de otras unidades?"),
+    textarea("65.ally", valueChain, "¿Quién sería un posible aliado o proveedor?"),
+    textarea("65.conditions", valueChain, "¿Habría alguna condición para trabajar juntos?"),
+    textarea("65.pilot", valueChain, "¿Qué primer producto o servicio podría venderse en una prueba piloto de 30 días con este aliado o proveedor?"),
+
+    radio("66.health", legal, "¿Padece alguna enfermedad grave, crónica o condición de discapacidad que requiera atención o medicamentos constantes?", yesNo),
+  );
+  if (answers["66.health"] === "Sí") {
+    steps.push(textarea("66.health.details", legal, "¿Cuál enfermedad o condición requiere atención o medicamentos constantes?"));
+  }
+  steps.push(
+    radio("67.dependents", legal, "¿Tiene en su núcleo familiar niños, adultos mayores, personas con discapacidad o enfermedades graves que dependan de usted?", yesNo),
+  );
+  if (answers["67.dependents"] === "Sí") {
+    steps.push(textarea("67.dependents.details", legal, "Describa las personas dependientes y sus necesidades"));
+  }
+  steps.push(
+    radio("68.aid", legal, "¿Recibió el último giro de Atención Humanitaria de Emergencia por parte de la UARIV?", yesNo),
+  );
+  if (answers["68.aid"] === "Sí") {
+    steps.push(
+      text("68.aid.date", legal, "Fecha en que recibió el último giro de Atención Humanitaria de Emergencia", { inputType: "date" }),
+      number("68.aid.amount", legal, "Monto del último giro recibido (COP)", { min: 0 }),
+    );
+  }
+  steps.push(
+    radio("69", legal, "¿Recibió alguna notificación o resolución escrita por parte de la UARIV donde le informen del estado de su ayuda humanitaria?", yesNo),
+    select("70", legal, "¿Cuál es el medio de comunicación por el que prefiere recibir información sobre sus procesos?", [
+      "WhatsApp",
+      "Llamada telefónica",
+      "Correo electrónico",
+      "Requiero apoyo para comunicarme",
+      "Otro",
+    ]),
+  );
+  addOtherText(steps, answers, "70", legal, "¿Cuál otro medio de comunicación prefiere?", "Otro");
 
   return steps;
 };
