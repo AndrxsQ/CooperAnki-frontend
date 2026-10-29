@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { LoginForm } from "../components/LoginForm";
 import { useTheme } from "../context/useTheme";
 
@@ -7,18 +6,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <Link
-        className="fixed left-4 top-4 z-40 inline-flex min-h-10 items-center justify-center rounded-lg border border-sky-700 bg-white px-4 text-sm font-semibold text-sky-800 shadow-sm transition hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-400 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800 dark:focus-visible:outline-sky-400 sm:left-6 sm:top-6"
-        to="/survey"
-      >
-        Encuesta Cooperativa
-      </Link>
-      <Link
-        className="fixed left-4 top-16 z-40 inline-flex min-h-10 items-center justify-center rounded-lg border border-sky-700 bg-white px-4 text-sm font-semibold text-sky-800 shadow-sm transition hover:bg-sky-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 dark:border-sky-400 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800 dark:focus-visible:outline-sky-400 sm:left-6 sm:top-[4.5rem]"
-        to="/legal-survey"
-      >
-        Encuesta Jurídica
-      </Link>
       <button
         aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
         aria-pressed={isDark}
