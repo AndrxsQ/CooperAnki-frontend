@@ -133,18 +133,20 @@ export const getHouseholdMembers = (answers) => [
   ),
 ];
 
-const addOtherText = (steps, answers, id, section, title, trigger) => {
-  const answer = answers[id];
-  if (
-    answer === trigger ||
-    (Array.isArray(answer) && answer.includes(trigger))
-  ) {
-    steps.push(
-      text(`${id}.other`, section, title, {
-        placeholder: "Especifique",
-      }),
-    );
+const addOtherText = (steps, id, title, trigger) => {
+  const question = steps.find((candidate) => candidate.id === id);
+  if (!question) {
+    throw new Error(`No se encontró la pregunta ${id} para agregar texto adicional.`);
   }
+  question.inlineInputs = [
+    ...(question.inlineInputs ?? []),
+    {
+      id: `${id}.other`,
+      label: title,
+      when: trigger,
+      placeholder: "Especifique",
+    },
+  ];
 };
 
 export const buildSurveySteps = (answers) => {
@@ -157,12 +159,18 @@ export const buildSurveySteps = (answers) => {
   const assets = "Activos e infraestructura productiva";
 
   steps.push(
-    number("1", profile, "Número de identificación"),
-    text("2", profile, "Nombre completo"),
-    number("3", profile, "Rango de edad", { min: 0, max: 120 }),
-    number("4", profile, "Número de teléfono"),
-    text("5", profile, "Correo electrónico", { inputType: "email" }),
-    select("6", profile, "Nivel de escolaridad", [
+    text("1", profile, "Nombre completo"),
+    select("2", profile, "Tipo de identificación", [
+      "Tarjeta de Identidad",
+      "Cédula de Ciudadanía",
+      "Cédula de Extranjería",
+      "Otro",
+    ]),
+    number("3", profile, "Número de identificación"),
+    number("4", profile, "Edad", { min: 0, max: 120 }),
+    number("5", profile, "Número de teléfono"),
+    text("6", profile, "Correo electrónico", { inputType: "email" }),
+    select("7", profile, "Nivel de escolaridad", [
       "Sin escolaridad formal",
       "Primaria",
       "Secundaria",
@@ -170,44 +178,76 @@ export const buildSurveySteps = (answers) => {
       "Universitaria/Profesional",
       "Otra",
     ]),
-    select("7", profile, "Departamento donde vive", surveyDepartments, {
-      helperText: "Catálogo estático temporal.",
-    }),
+    select("8", profile, "Departamento donde vive actualmente", surveyDepartments),
   );
+  addOtherText(steps, "2", "Especifique el tipo de identificación", "Otro");
 
-  const selectedDepartment = answers["7"];
+  const selectedDepartment = answers["8"];
   const municipalities = municipalitiesByDepartment[selectedDepartment] ?? [];
   steps.push(
     select(
-      "8",
+      "9",
       profile,
-      "Municipio donde vive",
-      [...municipalities, "Otro / no aparece en la lista"],
+      "Municipio donde vive actualmente",
+      [...municipalities, "Otro"],
       {
         disabled:
           !selectedDepartment ||
           selectedDepartment === "No sabe / No responde",
         helperText:
-          "Catálogo estático temporal. Si el municipio no aparece, selecciona “Otro / no aparece en la lista”.",
+          "Si el municipio no aparece, seleccione “Otro”.",
       },
     ),
+    text("10", profile, "Corregimiento / Vereda / Barrio donde vive actualmente"),
+    select("birth.department", profile, "Departamento donde nació", surveyDepartments),
+    select(
+      "birth.municipality",
+      profile,
+      "Municipio donde nació",
+      [
+        ...(municipalitiesByDepartment[answers["birth.department"]] ?? []),
+        "Otro",
+      ],
+      {
+        disabled:
+          !answers["birth.department"] ||
+          answers["birth.department"] === "No sabe / No responde",
+        helperText: "Si el municipio no aparece, seleccione “Otro”.",
+      },
+    ),
+    text("birth.neighborhood", profile, "Corregimiento / Vereda / Barrio donde nació"),
   );
+  addOtherText(steps, "9", "Especifique el municipio", "Otro");
   addOtherText(
     steps,
-    answers,
-    "8",
-    profile,
-    "Especifique el municipio",
-    "Otro / no aparece en la lista",
+    "birth.municipality",
+    "Especifique el municipio donde nació",
+    "Otro",
   );
   steps.push(
-    text("9", profile, "Corregimiento / Vereda / Barrio donde vive (si aplica)"),
-    radio("10", profile, "¿Sabe leer, escribir y realizar cálculos básicos para manejar su negocio?", [
+    radio("literacy", profile, "¿Sabe leer, escribir y realizar cálculos básicos para manejar su negocio?", [
       "Sí",
       "Con apoyo",
       "No",
-      "Prefiere no responder",
     ]),
+    radio("socials", profile, "¿Utiliza redes sociales?", [
+      "Sí",
+      "Con apoyo",
+      "No",
+    ]),
+  );
+  if (["Sí", "Con apoyo"].includes(answers.socials)) {
+    steps.push(
+      multi(
+        "socials.which",
+        profile,
+        "¿Cuáles redes sociales utiliza?",
+        ["WhatsApp", "Facebook", "Instagram", "TikTok", "Otras"],
+      ),
+    );
+    addOtherText(steps, "socials.which", "¿Cuáles otras redes sociales?", "Otras");
+  }
+  steps.push(
     textarea("11", profile, "¿Cuál es su ocupación o actividad económica principal?"),
     radio("12", profile, "¿Cuánto tiempo de experiencia tiene en esta actividad?", [
       "Menos de 1 año",
@@ -216,9 +256,27 @@ export const buildSurveySteps = (answers) => {
       "Más de 10 años",
     ]),
     textarea("13", profile, "¿Qué labores o actividades realiza personalmente (producción, compras, ventas, cuentas, administración u otras)?"),
-    textarea("14", profile, "¿Ha liderado algún negocio, grupo, asociación o actividad comunitaria? Describa:"),
+    radio("14", profile, "¿Ha liderado algún negocio, grupo, asociación o actividad comunitaria?", yesNo, {
+      inlineInputs: [
+        {
+          id: "14.details",
+          label: "¿Cuáles?",
+          when: "Sí",
+          type: "textarea",
+        },
+      ],
+    }),
     text("15", profile, "¿Cuánto tiempo por semana puede dedicar al negocio o formación?"),
-    textarea("16", profile, "¿Tiene alguna actividad de pasatiempo u ocio?"),
+    radio("16", profile, "¿Tiene alguna actividad de pasatiempo u ocio?", yesNo, {
+      inlineInputs: [
+        {
+          id: "16.details",
+          label: "¿Cuáles?",
+          when: "Sí",
+          type: "textarea",
+        },
+      ],
+    }),
   );
 
   steps.push(
@@ -231,33 +289,27 @@ export const buildSurveySteps = (answers) => {
   const householdCount = getCount(answers, "17");
   for (let index = 0; index < householdCount; index += 1) {
     const prefix = `household.${index}`;
-    const member = `integrante ${index + 1}`;
+    const member = familyMemberName(answers, index);
     steps.push(
-      text(`${prefix}.name`, household, `17.${index + 1}.1. Nombre completo de ${member}`),
-      number(`${prefix}.identification`, household, `17.${index + 1}.2. Número de identificación de ${member}`),
-      number(`${prefix}.age`, household, `17.${index + 1}.3. Edad de ${member}`, { min: 0, max: 120 }),
-      select(`${prefix}.kinship`, household, `17.${index + 1}.4. Parentesco de ${member}`, [
+      text(`${prefix}.name`, household, "Nombre completo"),
+      number(`${prefix}.identification`, household, `Número de identificación de ${member}`),
+      number(`${prefix}.age`, household, `Edad de ${member}`, { min: 0, max: 120 }),
+      select(`${prefix}.kinship`, household, `Parentesco de ${member}`, [
         "Hijo o Hija",
         "Padre",
         "Madre",
+        "Hermano o Hermana",
         "Abuelo o Abuela",
         "Nieto o Nieta",
         "Tío o tía",
         "Otro",
       ]),
     );
-    addOtherText(
-      steps,
-      answers,
-      `${prefix}.kinship`,
-      household,
-      `Especifique el parentesco de ${member}`,
-      "Otro",
-    );
+    addOtherText(steps, `${prefix}.kinship`, `Especifique el parentesco de ${member}`, "Otro");
     steps.push(
-      textarea(`${prefix}.occupation`, household, `18.${index + 1}.1. Ocupación o fuente de ingreso de ${member}`),
-      number(`${prefix}.contribution`, household, `18.${index + 1}.2. Aporte monetario aproximado al mes (COP) de ${member}`, { min: 0 }),
-      textarea(`${prefix}.nonMonetary`, household, `18.${index + 1}.3. Aportes no monetarios (trabajo, cuidados, activos, contactos) de ${member}`),
+      textarea(`${prefix}.occupation`, household, `Ocupación o fuente de ingreso de ${member}`),
+      number(`${prefix}.contribution`, household, `Aporte monetario aproximado al mes (COP) de ${member}`, { min: 0 }),
+      textarea(`${prefix}.nonMonetary`, household, `Aportes no monetarios (trabajo, cuidados, activos, contactos) de ${member}`),
     );
   }
 
@@ -266,10 +318,20 @@ export const buildSurveySteps = (answers) => {
     multi("19.people", household, "¿Quiénes colaboran actualmente en las actividades económicas familiares?", [
       ...members,
       "Nadie actualmente",
-    ]),
-    textarea("19.tasks", household, "¿En qué tareas colaboran?"),
+    ], {
+      repeatText: {
+        prefix: "19.tasks",
+        options: members,
+        label: "¿En qué tareas colabora?",
+      },
+    }),
     multi("20.people", household, "¿Quién asume tareas de cuidado, cocina, limpieza y apoyo doméstico?", members),
-    number("20.hours", household, "¿Aproximadamente cuántas horas semanales se dedican a estas tareas?", { min: 0 }),
+    step("20.hours", household, "Horas semanales dedicadas a las tareas domésticas", "repeat-number", null, {
+      repeatFrom: "20.people",
+      options: members,
+      label: "¿Cuántas horas dedica?",
+      min: 0,
+    }),
     radio("21", household, "¿Hay actividades económicas que comparten varias personas de la familia?", yesNo),
   );
   if (answers["21"] === "Sí") {
@@ -289,12 +351,12 @@ export const buildSurveySteps = (answers) => {
   const incomeCount = getCount(answers, "22");
   for (let index = 0; index < incomeCount; index += 1) {
     const prefix = `income.${index}`;
-    const sourceLabel = `fuente de ingreso ${index + 1}`;
+    const sourceLabel = answers[`${prefix}.source`] || "esta fuente de ingreso";
     steps.push(
-      text(`${prefix}.source`, income, `22.${index + 1}.1. ¿Cuál es la fuente de ingreso?`),
-      number(`${prefix}.member`, income, `22.${index + 1}.2. Número del integrante que genera el ingreso`, { min: 0 }),
-      number(`${prefix}.amount`, income, `22.${index + 1}.3. Monto del ingreso (COP)`, { min: 0 }),
-      select(`${prefix}.frequency`, income, `22.${index + 1}.4. Frecuencia del ingreso`, [
+      text(`${prefix}.source`, income, "¿Cuál es la fuente de ingreso?"),
+      select(`${prefix}.member`, income, `¿Quién genera el ingreso de ${sourceLabel}?`, members),
+      number(`${prefix}.amount`, income, `Monto del ingreso de ${sourceLabel} (COP)`, { min: 0 }),
+      select(`${prefix}.frequency`, income, `Frecuencia del ingreso de ${sourceLabel}`, [
         "Diaria",
         "Semanal",
         "Mensual",
@@ -302,29 +364,27 @@ export const buildSurveySteps = (answers) => {
         "Otra",
       ]),
     );
-    addOtherText(
-      steps,
-      answers,
-      `${prefix}.frequency`,
-      income,
-      `Especifique la frecuencia de ${sourceLabel}`,
-      "Por temporada",
+    const frequencyQuestion = steps.find(
+      (question) => question.id === `${prefix}.frequency`,
     );
-    addOtherText(
-      steps,
-      answers,
-      `${prefix}.frequency`,
-      income,
-      `¿Cuál otra frecuencia tiene ${sourceLabel}?`,
-      "Otra",
-    );
+    frequencyQuestion.inlineInputs = ["Por temporada", "Otra"].map((when) => ({
+      id: `${prefix}.frequency.${when === "Otra" ? "other" : "season"}`,
+      label:
+        when === "Otra"
+        ? `¿Cuál otra frecuencia tiene ${sourceLabel}?`
+        : `Especifique la temporada de ${sourceLabel}`,
+      when,
+      placeholder: "Especifique",
+    }));
     steps.push(
-      select(`${prefix}.type`, income, `22.${index + 1}.5. Tipo de ingreso`, [
+      select(`${prefix}.type`, income, `Tipo de ingreso de ${sourceLabel}`, [
         "Venta",
         "Ganancia",
         "Salario",
+        "Otro",
       ]),
     );
+    addOtherText(steps, `${prefix}.type`, `Especifique el tipo de ingreso de ${sourceLabel}`, "Otro");
   }
 
   steps.push(
@@ -334,7 +394,7 @@ export const buildSurveySteps = (answers) => {
   );
   if (answers["24"] === "Sí") {
     steps.push(
-      textarea("24.1.source", income, "¿Cuál(es) es(son) la(s) fuente(s) de ingreso extra?"),
+      textarea("24.1.source", income, "¿Cuáles son las fuentes de ingreso extra?"),
       number("24.1.amount", income, "Monto aproximado de los ingresos extra (COP)", { min: 0 }),
     );
   }
@@ -343,24 +403,60 @@ export const buildSurveySteps = (answers) => {
     select("25.status", income, "Calidad de la estimación de ingreso", [
       "Comprobado",
       "Estimado",
-      "No disponible",
     ]),
-    textarea("26.detail", income, "¿Qué ingresos controla o recibe directamente usted como mujer? Describa las fuentes:"),
-    number("26.amount", income, "Monto aproximado mensual de esos ingresos (COP)", { min: 0 }),
+  );
+
+  const controlledIncomeSources = Array.from({ length: incomeCount }, (_, index) => ({
+    id: `income.${index}`,
+    name: answers[`income.${index}.source`] || `Fuente de ingreso ${index + 1}`,
+    index,
+  }));
+  const otherIncomeCount = answers["26.otherEnabled"]
+    ? Math.max(getCount(answers, "26.otherCount"), 1)
+    : 0;
+  const additionalIncomeSources = Array.from(
+    { length: otherIncomeCount },
+    (_, index) => ({
+      id: `other.${index}`,
+      name: answers[`26.otherSource.${index}`] || `Otro ingreso ${index + 1}`,
+      index,
+    }),
+  );
+  steps.push(
+    step("26.detail", income, "¿Qué ingresos controla o recibe directamente usted como mujer? Especifique los detalles de cada uno.", "income-details", null, {
+      incomeSources: controlledIncomeSources,
+      otherIncomeEnabled: Boolean(answers["26.otherEnabled"]),
+      otherIncomeCount,
+      noIncomeAvailable:
+        controlledIncomeSources.length === 0 && otherIncomeCount === 0,
+    }),
+    step("26.amount", income, "Monto mensual de cada ingreso que controla o recibe directamente (COP)", "income-amounts", null, {
+      incomeSources: [...controlledIncomeSources, ...additionalIncomeSources],
+      min: 0,
+      noIncomeAvailable:
+        controlledIncomeSources.length === 0 && otherIncomeCount === 0,
+    }),
   );
 
   steps.push(
-    radio("27.self.hasTrade", skills, "27.1. ¿Tiene un oficio o profesión?", [
+    radio("27.self.hasTrade", skills, "¿Tiene un oficio o profesión?", [
       "Sí",
       "No",
-    ]),
+    ], {
+      inlineInputs: [
+        {
+          id: "27.self.trade",
+          label: "¿Cuál es su oficio o profesión?",
+          when: "Sí",
+        },
+      ],
+    }),
   );
   if (answers["27.self.hasTrade"] === "Sí") {
     steps.push(
-      text("27.self.trade", skills, "¿Cuál es su oficio o profesión?"),
-      number("27.self.years", skills, "27.2. Años de experiencia", { min: 0 }),
-      textarea("27.self.training", skills, "27.3. Formación o certificación"),
-      radio("27.self.sells", skills, "27.4. ¿Actualmente vende o presta el servicio?", yesNo),
+      number("27.self.years", skills, "Años de experiencia", { min: 0 }),
+      textarea("27.self.training", skills, "Formación o certificación"),
+      radio("27.self.sells", skills, "¿Actualmente vende o presta el servicio?", yesNo),
     );
   }
   for (let index = 0; index < householdCount; index += 1) {
@@ -383,13 +479,13 @@ export const buildSurveySteps = (answers) => {
     textarea("29", skills, "¿Cuáles capacidades o habilidades familiares podrían ofrecerse a la red empresarial o a otros clientes?"),
     textarea("30", skills, "¿Qué servicios necesita el hogar contratar para producir o vender (transporte, contabilidad, reparación, diseño, etc.)?"),
     textarea("31", skills, "¿Qué servicios profesionales requieren habilitación, permiso o acreditación antes de prestarse?"),
-    select("32", business, "Situación actual", [
+    select("32", business, "Situación actual del negocio", [
       "Tiene negocio funcionando",
       "Trabaja por cuenta propia sin negocio formal",
       "Tiene idea de negocio",
       "No realiza actividad económica",
     ]),
-    select("33", business, "Modalidad actual", [
+    select("33", business, "Modalidad actual del negocio", [
       "Individual",
       "Familiar",
       "Asociativa",
@@ -397,7 +493,7 @@ export const buildSurveySteps = (answers) => {
       "Sin definir",
     ]),
     textarea("34", business, "¿Qué bienes o servicios ofrece? Menciónelos de mayor a menor importancia"),
-    select("35", business, "¿Dónde opera?", [
+    select("35", business, "¿Dónde opera el negocio?", [
       "Hogar",
       "Local propio",
       "Local arrendado",
@@ -406,14 +502,7 @@ export const buildSurveySteps = (answers) => {
       "Otro",
     ]),
   );
-  addOtherText(
-    steps,
-    answers,
-    "35",
-    business,
-    "Especifique dónde opera",
-    "Otro",
-  );
+  addOtherText(steps, "35", "Especifique dónde opera", "Otro");
   steps.push(
     radio("36", business, "¿Tiene registros de compras, ventas, gastos o inventario?", [
       "Sí",
@@ -443,16 +532,16 @@ export const buildSurveySteps = (answers) => {
     const prefix = `asset.${index}`;
     const assetName = answers[`${prefix}.name`] || `activo ${index + 1}`;
     steps.push(
-      text(`${prefix}.name`, assets, `39.${index + 1}.1. Nombre del activo o herramienta`),
-      number(`${prefix}.quantity`, assets, `39.${index + 1}.2. Cantidad`, { min: 1 }),
-      select(`${prefix}.condition`, assets, `39.${index + 1}.3. Estado`, [
+      text(`${prefix}.name`, assets, "Nombre del activo o herramienta"),
+      number(`${prefix}.quantity`, assets, `Cantidad de ${assetName}`, { min: 1 }),
+      select(`${prefix}.condition`, assets, `Estado de ${assetName}`, [
         "Muy bueno",
         "Bueno",
         "Regular",
         "Malo",
         "Muy malo",
       ]),
-      select(`${prefix}.use`, assets, `39.${index + 1}.4. Tipo de uso`, [
+      select(`${prefix}.use`, assets, `Tipo de uso de ${assetName}`, [
         "Personal",
         "Familiar",
         "Alquilado",
@@ -460,17 +549,10 @@ export const buildSurveySteps = (answers) => {
         "Otro",
       ]),
     );
-    addOtherText(
-      steps,
-      answers,
-      `${prefix}.use`,
-      assets,
-      `Especifique el tipo de uso de ${assetName}`,
-      "Otro",
-    );
+    addOtherText(steps, `${prefix}.use`, `Especifique el tipo de uso de ${assetName}`, "Otro");
     steps.push(
-      textarea(`${prefix}.function`, assets, `39.${index + 1}.5. Función actual de ${assetName}`),
-      textarea(`${prefix}.improvement`, assets, `39.${index + 1}.6. Mejora necesaria para ${assetName}`),
+      textarea(`${prefix}.function`, assets, `Función actual de ${assetName}`),
+      textarea(`${prefix}.improvement`, assets, `Mejora necesaria para ${assetName}`),
     );
   }
   steps.push(
@@ -487,7 +569,7 @@ export const buildSurveySteps = (answers) => {
       const prefix = `41.${index}`;
       const assetName = answers[`asset.${index}.name`] || `Activo ${index + 1}`;
       steps.push(
-        radio(prefix, assets, `41. ¿El activo "${assetName}" puede compartirse o prestarse?`, yesNo),
+        radio(prefix, assets, `¿El activo "${assetName}" puede compartirse o prestarse?`, yesNo),
       );
     }
   }
@@ -506,7 +588,7 @@ export const buildSurveySteps = (answers) => {
     text("43.name", finances, "Nombre del negocio"),
     text("43.period", finances, "Periodo observado"),
     number("44.sales", finances, "Monto de ventas promedio durante el periodo (COP)", { min: 0 }),
-    text("44.quantity", finances, "Cantidad de unidades o servicios vendidos"),
+    text("44.quantity", finances, "Cantidad de unidades o servicios vendidos durante el periodo"),
   );
 
   const expenseCategories = [
@@ -527,7 +609,7 @@ export const buildSurveySteps = (answers) => {
 
   steps.push(
     text("46.name", finances, "Nombre del trabajo familiar no remunerado"),
-    textarea("46.performer", finances, "¿Quién realiza el trabajo familiar no remunerado?"),
+    multi("46.performer", finances, "¿Quiénes realizan el trabajo familiar no remunerado?", members),
     text("46.amount", finances, "¿Cuánto considera que se debería remunerar este trabajo?"),
     number("47.profit", finances, "Monto estimado de la ganancia neta durante el periodo (COP)", { min: 0 }),
     radio("47.usedAtHome", finances, "¿La ganancia se usa para el hogar?", yesNo),
@@ -543,7 +625,7 @@ export const buildSurveySteps = (answers) => {
       "Otros",
     ]),
   );
-  addOtherText(steps, answers, "49.buyers", marketing, "Especifique otros compradores", "Otros");
+  addOtherText(steps, "49.buyers", "Especifique otros compradores", "Otros");
   steps.push(
     multi("50.channels", marketing, "¿Cómo consigue clientes?", [
       "Recomendación",
@@ -555,12 +637,12 @@ export const buildSurveySteps = (answers) => {
       "Otro",
     ]),
   );
-  addOtherText(steps, answers, "50.channels", marketing, "Especifique otro medio para conseguir clientes", "Otro");
+  addOtherText(steps, "50.channels", "Especifique otro medio para conseguir clientes", "Otro");
   steps.push(
     text("51.product", marketing, "¿Cuál de sus productos o servicios vende con mayor frecuencia?"),
     number("51.price", marketing, "¿Qué precio tiene por unidad? (COP)", { min: 0 }),
-    text("51.quantity", marketing, "¿Cuántas unidades vende?"),
-    textarea("52", marketing, "¿Cuáles son sus tres principales dificultades para vender y cobrar?"),
+    text("51.quantity", marketing, "¿Cuántas unidades vende en promedio?"),
+    textarea("52", marketing, "¿Cuáles dificultades tiene actualmente para vender y cobrar?"),
     textarea("53", marketing, "¿Dónde consigue los insumos?"),
     textarea("54", marketing, "¿Cómo transporta o entrega los productos o servicios?"),
     radio("55", marketing, "¿Conoce o utiliza herramientas digitales para comercializar?", [
@@ -574,11 +656,11 @@ export const buildSurveySteps = (answers) => {
   steps.push(
     select("56.decisions", governance, "¿Quién decide los precios, las compras, las ventas y las inversiones del negocio?", decisionOptions),
   );
-  addOtherText(steps, answers, "56.decisions", governance, "¿Quién decide?", "Otra persona");
+  addOtherText(steps, "56.decisions", "¿Quién decide?", "Otra persona");
   steps.push(
     select("57.payments", governance, "¿Quién recibe los pagos, administra el dinero y decide cómo usar la ganancia?", decisionOptions),
   );
-  addOtherText(steps, answers, "57.payments", governance, "¿Quién recibe y administra el dinero?", "Otra persona");
+  addOtherText(steps, "57.payments", "¿Quién recibe y administra el dinero?", "Otra persona");
   steps.push(
     radio("58", governance, "¿Le interesa trabajar con otras mujeres o familias?", [
       "Sí",
@@ -604,7 +686,7 @@ export const buildSurveySteps = (answers) => {
       "Otras",
     ]),
   );
-  addOtherText(steps, answers, "60", governance, "¿Qué otras preocupaciones tendría al asociarse?", "Otras");
+  addOtherText(steps, "60", "¿Qué otras preocupaciones tendría al asociarse?", "Otras");
   steps.push(
     textarea("61", governance, "¿Qué condiciones necesitaría para participar sin aumentar excesivamente su carga de trabajo?"),
 
@@ -617,10 +699,10 @@ export const buildSurveySteps = (answers) => {
       "Transporte",
       "Formación",
       "Asesoría",
-      "Otra",
+      "Otras",
     ]),
   );
-  addOtherText(steps, answers, "62", training, "Especifique otra necesidad prioritaria", "Otra");
+  addOtherText(steps, "62", "Especifique otras necesidades prioritarias", "Otras");
   steps.push(
     multi("63.topics", training, "¿En qué temas desea formarse? (Seleccione los que apliquen)", [
       "Costos y precios",
@@ -633,7 +715,7 @@ export const buildSurveySteps = (answers) => {
       "Otro",
     ]),
   );
-  addOtherText(steps, answers, "63.topics", training, "Especifique otro tema de formación", "Otro");
+  addOtherText(steps, "63.topics", "Especifique otro tema de formación", "Otro");
   steps.push(
     multi("63.format", training, "¿Cómo puede participar mejor en la formación? (Seleccione las opciones que apliquen)", [
       "Presencial",
@@ -642,11 +724,21 @@ export const buildSurveySteps = (answers) => {
       "Apoyo visual",
       "Acompañamiento individual",
     ]),
-    radio("63.goal", training, "¿Tiene una meta concreta de ingresos o de crecimiento para los próximos 12 meses?", yesNo),
+    radio("63.goal", training, "¿Tiene una meta concreta de ingresos o de crecimiento para los próximos 12 meses?", yesNo, {
+      inlineInputs: [
+        {
+          id: "63.goal.details",
+          label: "¿Cuál es su meta de ingresos o crecimiento?",
+          when: "Sí",
+        },
+        {
+          id: "63.goal.reason",
+          label: "¿Por qué no tiene una meta concreta?",
+          when: "No",
+        },
+      ],
+    }),
   );
-  if (answers["63.goal"] === "Sí") {
-    steps.push(textarea("63.goal.details", training, "Describa su meta de ingresos o crecimiento"));
-  }
 
   steps.push(
     multi("64", valueChain, "¿En cuáles líneas desea participar?", [
@@ -655,6 +747,7 @@ export const buildSurveySteps = (answers) => {
       "Turismo cultural",
       "Artesanías",
       "Servicios u oficios complementarios",
+      "Otra",
     ]),
     textarea("65.offer", valueChain, "¿Qué podría ofrecer a otras unidades?"),
     textarea("65.purchase", valueChain, "¿Qué necesitaría comprar de otras unidades?"),
@@ -664,15 +757,25 @@ export const buildSurveySteps = (answers) => {
 
     radio("66.health", legal, "¿Padece alguna enfermedad grave, crónica o condición de discapacidad que requiera atención o medicamentos constantes?", yesNo),
   );
-  if (answers["66.health"] === "Sí") {
-    steps.push(textarea("66.health.details", legal, "¿Cuál enfermedad o condición requiere atención o medicamentos constantes?"));
-  }
+  addOtherText(steps, "64", "¿Cuál otra línea?", "Otra");
+  steps[steps.length - 1].inlineInputs = [
+    {
+      id: "66.health.details",
+      label: "¿Cuál enfermedad o condición requiere atención o medicamentos constantes?",
+      when: "Sí",
+    },
+  ];
   steps.push(
     radio("67.dependents", legal, "¿Tiene en su núcleo familiar niños, adultos mayores, personas con discapacidad o enfermedades graves que dependan de usted?", yesNo),
   );
-  if (answers["67.dependents"] === "Sí") {
-    steps.push(textarea("67.dependents.details", legal, "Describa las personas dependientes y sus necesidades"));
-  }
+  steps[steps.length - 1].inlineInputs = [
+    {
+      id: "67.dependents.details",
+      label: "Describa las personas dependientes y sus necesidades",
+      when: "Sí",
+      type: "textarea",
+    },
+  ];
   steps.push(
     radio("68.aid", legal, "¿Recibió el último giro de Atención Humanitaria de Emergencia por parte de la UARIV?", yesNo),
   );
@@ -692,7 +795,7 @@ export const buildSurveySteps = (answers) => {
       "Otro",
     ]),
   );
-  addOtherText(steps, answers, "70", legal, "¿Cuál otro medio de comunicación prefiere?", "Otro");
+  addOtherText(steps, "70", "¿Cuál otro medio de comunicación prefiere?", "Otro");
 
   return steps;
 };

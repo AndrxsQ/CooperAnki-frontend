@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTheme } from "../context/useTheme";
+import { submitSurveyResponse } from "../api/surveys";
 import {
   buildSurveySteps,
-  getMunicipalityOptions,
   isUnknownAnswer,
 } from "../data/surveyQuestions";
 
@@ -40,12 +40,112 @@ const getValidationError = (question, answer) => {
   return "";
 };
 
+const isAnswered = (value) =>
+  Array.isArray(value)
+    ? value.length > 0
+    : typeof value === "string" && value.trim().length > 0;
+
+const getQuestionValidationError = (question, answers) => {
+  const answer = answers[question.id] ?? "";
+
+  if (question.type === "repeat-number") {
+    const selectedMembers = answers[question.repeatFrom];
+    if (!Array.isArray(selectedMembers) || selectedMembers.length === 0) {
+      return "Selecciona al menos un integrante en la pregunta anterior.";
+    }
+    for (const member of selectedMembers) {
+      const memberIndex = question.options.indexOf(member);
+      if (memberIndex < 0) {
+        continue;
+      }
+      const value = answers[`${question.id}.${memberIndex}`];
+      const error = getValidationError(
+        { type: "number", min: question.min },
+        value ?? "",
+      );
+      if (error) {
+        return `Completa un número válido de horas para ${member}.`;
+      }
+    }
+  } else if (question.type === "income-details") {
+    if (question.noIncomeAvailable && answers["26.noIncome"] !== true) {
+      return "Indica si no recibes ingresos directamente o completa los detalles.";
+    }
+    for (const source of question.incomeSources) {
+      const detail = answers[`26.detail.${source.index}`];
+      if (!isAnswered(detail)) {
+        return `Completa los detalles de ${source.name}.`;
+      }
+    }
+    if (question.otherIncomeEnabled) {
+      for (let index = 0; index < question.otherIncomeCount; index += 1) {
+        if (!isAnswered(answers[`26.otherSource.${index}`])) {
+          return `Escribe el nombre del otro ingreso ${index + 1}.`;
+        }
+        if (!isAnswered(answers[`26.otherDetail.${index}`])) {
+          return `Completa los detalles del otro ingreso ${index + 1}.`;
+        }
+      }
+    }
+  } else if (question.type === "income-amounts") {
+    if (question.noIncomeAvailable && answers["26.noIncome"] !== true) {
+      return "Indica si no recibes ingresos directamente o completa los montos.";
+    }
+    for (const source of question.incomeSources) {
+      const amount = source.id.startsWith("other.")
+        ? answers[`26.amount.other.${source.index}`]
+        : answers[`26.amount.${source.index}`];
+      const error = getValidationError(
+        { type: "number", min: question.min },
+        amount ?? "",
+      );
+      if (error) {
+        return `Completa un monto válido para ${source.name}.`;
+      }
+    }
+  } else {
+    const error = getValidationError(question, answer);
+    if (error) {
+      return error;
+    }
+  }
+
+  if (question.repeatText) {
+    for (const member of Array.isArray(answer) ? answer : []) {
+      if (member === "Nadie actualmente") {
+        continue;
+      }
+      const memberIndex = question.repeatText.options.indexOf(member);
+      if (
+        memberIndex >= 0 &&
+        !isAnswered(answers[`${question.repeatText.prefix}.${memberIndex}`])
+      ) {
+        return `Indica en qué tareas colabora ${member}.`;
+      }
+    }
+  }
+
+  for (const field of question.inlineInputs ?? []) {
+    const shouldShow = Array.isArray(answer)
+      ? answer.includes(field.when)
+      : answer === field.when;
+    if (shouldShow && !isAnswered(answers[field.id])) {
+      return `Completa el campo: ${field.label}`;
+    }
+  }
+
+  return "";
+};
+
 const Survey = () => {
   const { isDark, toggleTheme } = useTheme();
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState({});
   const [consent, setConsent] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
+  const [receipt, setReceipt] = useState(null);
   const steps = buildSurveySteps(answers);
 
   const isWelcome = step === -1;
@@ -53,19 +153,20 @@ const Survey = () => {
   const question = steps[step];
   const answer = question ? answers[question.id] ?? "" : "";
   const validationError =
-    question && showValidation ? getValidationError(question, answer) : "";
+    question && showValidation
+      ? getQuestionValidationError(question, answers)
+      : "";
 
-  const updateAnswer = (value) => {
-    setAnswers((current) => ({ ...current, [question.id]: value }));
+  const updateStoredAnswer = (id, value) => {
+    setAnswers((current) => ({ ...current, [id]: value }));
     setShowValidation(false);
   };
 
+  const updateAnswer = (value) => updateStoredAnswer(question.id, value);
+
   const goNext = (event) => {
     event.preventDefault();
-    const hasAnswer = Array.isArray(answer)
-      ? answer.length > 0
-      : typeof answer === "string" && answer.trim().length > 0;
-    if (hasAnswer && getValidationError(question, answer)) {
+    if (getQuestionValidationError(question, answers)) {
       setShowValidation(true);
       return;
     }
@@ -82,23 +183,40 @@ const Survey = () => {
     setAnswers({});
     setConsent(false);
     setShowValidation(false);
+    setIsSubmitting(false);
+    setSubmissionError("");
+    setReceipt(null);
     setStep(-1);
+  };
+
+  const sendSurvey = async () => {
+    if (isSubmitting || receipt) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmissionError("");
+    try {
+      const savedReceipt = await submitSurveyResponse(steps, answers);
+      setReceipt(savedReceipt);
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "No fue posible enviar la encuesta. Revisa tu conexión e inténtalo de nuevo.";
+      setSubmissionError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectUnknown = () => {
     updateAnswer(isUnknownAnswer(answer) ? "" : unknownAnswer);
   };
 
-  const selectedDepartment = answers["7"];
-  const options =
-    question?.id === "8" && selectedDepartment !== unknownAnswer
-      ? [
-          ...getMunicipalityOptions(selectedDepartment),
-          "Otro / no aparece en la lista",
-        ]
-      : question?.id === "8"
-        ? [unknownAnswer]
-        : question?.options ?? [];
+  const options = question?.options ?? [];
+  const selectedOption = (option) =>
+    answer === option || (Array.isArray(answer) && answer.includes(option));
 
   return (
     <main className="relative grid min-h-screen place-items-center bg-slate-50 px-4 py-8 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-6">
@@ -200,36 +318,70 @@ const Survey = () => {
         ) : isComplete ? (
           <div className="flex flex-1 flex-col justify-center">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-              Mensaje de cierre
+              {receipt ? "Encuesta recibida" : "Mensaje de cierre"}
             </p>
             <h1 className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              Gracias por suministrar la información solicitada.
+              {receipt
+                ? "Gracias por suministrar la información solicitada."
+                : "Tu encuesta está lista para enviarse."}
             </h1>
             <div className="mt-5 grid gap-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-              <p className="m-0">
-                Una vez diligenciado el formulario y surtida la notificación
-                personal deberá comunicarse directamente con las abogadas de
-                ASOCOLEMAD para coordinar la revisión integral de su expediente
-                individual y conocer su usuario y contraseña para el ingreso en
-                plataforma digital y ver el estado de los procesos judiciales y
-                administrativos relacionados con su caso, las actuaciones
-                realizadas, las medidas reconocidas y las gestiones pendientes.
-              </p>
-              <p className="m-0">
-                La información suministrada permitirá organizar el seguimiento
-                individual y facilitar la comunicación directa con el equipo
-                jurídico.
-              </p>
+              {receipt ? (
+                <>
+                  <p className="m-0">
+                    El servidor recibió y almacenó tus respuestas correctamente.
+                  </p>
+                  <dl className="grid gap-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
+                    <div className="flex flex-wrap gap-2">
+                      <dt className="font-semibold">Identificador:</dt>
+                      <dd className="m-0">{receipt.id}</dd>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <dt className="font-semibold">Fecha de recepción:</dt>
+                      <dd className="m-0">
+                        {new Date(receipt.submittedAt).toLocaleString("es-CO")}
+                      </dd>
+                    </div>
+                  </dl>
+                </>
+              ) : (
+                <>
+                  <p className="m-0">
+                    Al enviar, se guardará una copia de las preguntas presentadas
+                    y de las respuestas proporcionadas.
+                  </p>
+                  {submissionError && (
+                    <p
+                      aria-live="polite"
+                      className="m-0 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200"
+                      role="alert"
+                    >
+                      {submissionError}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="mt-8 flex justify-end">
-              <button
-                className={primaryButtonClass}
-                type="button"
-                onClick={restartSurvey}
-              >
-                Enviar Respuestas
-              </button>
+              {receipt ? (
+                <button
+                  className={primaryButtonClass}
+                  type="button"
+                  onClick={restartSurvey}
+                >
+                  Completar otra encuesta
+                </button>
+              ) : (
+                <button
+                  className={primaryButtonClass}
+                  disabled={isSubmitting}
+                  type="button"
+                  onClick={sendSurvey}
+                >
+                  {isSubmitting ? "Enviando encuesta..." : "Enviar Respuestas"}
+                </button>
+              )}
             </div>
           </div>
         ) : question ? (
@@ -342,7 +494,7 @@ const Survey = () => {
                     <option disabled value="">
                       Selecciona una opción
                     </option>
-                    {options.map((option) => (
+                    {(isUnknownAnswer(answer) ? [...options, unknownAnswer] : options).map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
@@ -356,6 +508,186 @@ const Survey = () => {
                     placeholder="Escribe tu respuesta"
                     value={isUnknownAnswer(answer) ? "" : answer}
                   />
+                ) : question.type === "repeat-number" ? (
+                  <div className="mt-8 grid gap-5">
+                    {(Array.isArray(answers[question.repeatFrom])
+                      ? answers[question.repeatFrom]
+                      : []
+                    ).map((member) => {
+                      const memberIndex = question.options.indexOf(member);
+                      if (memberIndex < 0) {
+                        return null;
+                      }
+                      const fieldId = `${question.id}.${memberIndex}`;
+                      return (
+                        <label className="grid gap-2 text-sm font-medium" key={member}>
+                          <span>{member}: {question.label}</span>
+                          <input
+                            aria-label={`${question.label} ${member}`}
+                            className={fieldClass}
+                            inputMode="decimal"
+                            min={question.min}
+                            onChange={(event) =>
+                              updateStoredAnswer(fieldId, event.target.value)
+                            }
+                            placeholder="Escribe un valor numérico"
+                            type="number"
+                            value={answers[fieldId] ?? ""}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : question.type === "income-details" ? (
+                  <div className="mt-8 grid gap-5">
+                    {question.incomeSources.map((source) => (
+                      <label className="grid gap-2 text-sm font-medium" key={source.id}>
+                        <span>{source.name}</span>
+                        <textarea
+                          aria-label={`Detalles de ${source.name}`}
+                          className={`${fieldClass} min-h-28 resize-y`}
+                          onChange={(event) =>
+                            updateStoredAnswer(
+                              `26.detail.${source.index}`,
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Describe los detalles de este ingreso"
+                          value={answers[`26.detail.${source.index}`] ?? ""}
+                        />
+                      </label>
+                    ))}
+                    {question.noIncomeAvailable && (
+                      <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+                        <input
+                          checked={answers["26.noIncome"] === true}
+                          className="h-4 w-4 accent-sky-700"
+                          onChange={(event) => {
+                            updateStoredAnswer("26.noIncome", event.target.checked);
+                            if (event.target.checked) {
+                              updateStoredAnswer("26.otherEnabled", false);
+                            }
+                          }}
+                          type="checkbox"
+                        />
+                        No recibo ni controlo ingresos directamente
+                      </label>
+                    )}
+                    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+                      <input
+                        checked={question.otherIncomeEnabled}
+                        className="h-4 w-4 accent-sky-700"
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            updateStoredAnswer("26.noIncome", false);
+                          }
+                          updateStoredAnswer(
+                            "26.otherEnabled",
+                            event.target.checked,
+                          );
+                          if (
+                            event.target.checked &&
+                            !Number.parseInt(answers["26.otherCount"] ?? "0", 10)
+                          ) {
+                            updateStoredAnswer("26.otherCount", "1");
+                          }
+                        }}
+                        type="checkbox"
+                      />
+                      Otros
+                    </label>
+                    {question.otherIncomeEnabled &&
+                      Array.from(
+                        { length: question.otherIncomeCount },
+                        (_, index) => (
+                          <div className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700" key={index}>
+                            <label className="grid gap-2 text-sm font-medium">
+                              <span>Nombre del otro ingreso</span>
+                              <input
+                                aria-label={`Nombre del otro ingreso ${index + 1}`}
+                                className={fieldClass}
+                                onChange={(event) =>
+                                  updateStoredAnswer(
+                                    `26.otherSource.${index}`,
+                                    event.target.value,
+                                  )
+                                }
+                                placeholder="Escribe el nombre del ingreso"
+                                value={answers[`26.otherSource.${index}`] ?? ""}
+                              />
+                            </label>
+                            <label className="grid gap-2 text-sm font-medium">
+                              <span>Detalles del ingreso</span>
+                              <textarea
+                                aria-label={`Detalles del otro ingreso ${index + 1}`}
+                                className={`${fieldClass} min-h-28 resize-y`}
+                                onChange={(event) =>
+                                  updateStoredAnswer(
+                                    `26.otherDetail.${index}`,
+                                    event.target.value,
+                                  )
+                                }
+                                placeholder="Describe los detalles de este ingreso"
+                                value={answers[`26.otherDetail.${index}`] ?? ""}
+                              />
+                            </label>
+                          </div>
+                        ),
+                      )}
+                    {question.otherIncomeEnabled && (
+                      <button
+                        className={secondaryButtonClass}
+                        onClick={() =>
+                          updateStoredAnswer(
+                            "26.otherCount",
+                            String(question.otherIncomeCount + 1),
+                          )
+                        }
+                        type="button"
+                      >
+                        Añadir otro ingreso
+                      </button>
+                    )}
+                  </div>
+                ) : question.type === "income-amounts" ? (
+                  <div className="mt-8 grid gap-5">
+                    {question.incomeSources.map((source) => {
+                      const fieldId =
+                        source.id.startsWith("other.")
+                          ? `26.amount.other.${source.index}`
+                          : `26.amount.${source.index}`;
+                      return (
+                        <label className="grid gap-2 text-sm font-medium" key={source.id}>
+                          <span>{source.name}</span>
+                          <input
+                            aria-label={`Monto mensual de ${source.name}`}
+                            className={fieldClass}
+                            inputMode="decimal"
+                            min={question.min}
+                            onChange={(event) =>
+                              updateStoredAnswer(fieldId, event.target.value)
+                            }
+                            placeholder="Escribe el monto mensual"
+                            type="number"
+                            value={answers[fieldId] ?? ""}
+                          />
+                        </label>
+                      );
+                    })}
+                    {question.noIncomeAvailable && (
+                      <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+                        <input
+                          checked={answers["26.noIncome"] === true}
+                          className="h-4 w-4 accent-sky-700"
+                          onChange={(event) =>
+                            updateStoredAnswer("26.noIncome", event.target.checked)
+                          }
+                          type="checkbox"
+                        />
+                        No recibo ni controlo ingresos directamente
+                      </label>
+                    )}
+                  </div>
                 ) : (
                   <input
                     aria-label={question.title}
@@ -379,6 +711,70 @@ const Survey = () => {
                     value={isUnknownAnswer(answer) ? "" : answer}
                   />
                 )}
+
+                {question.inlineInputs
+                  ?.filter((field) => selectedOption(field.when))
+                  .map((field) => (
+                    <label
+                      className="mt-5 grid gap-2 text-sm font-medium"
+                      key={field.id}
+                    >
+                      <span>{field.label}</span>
+                      {field.type === "textarea" ? (
+                        <textarea
+                          aria-label={field.label}
+                          className={`${fieldClass} min-h-28 resize-y`}
+                          onChange={(event) =>
+                            updateStoredAnswer(field.id, event.target.value)
+                          }
+                          placeholder={field.placeholder ?? "Escribe tu respuesta"}
+                          value={answers[field.id] ?? ""}
+                        />
+                      ) : (
+                        <input
+                          aria-label={field.label}
+                          className={fieldClass}
+                          onChange={(event) =>
+                            updateStoredAnswer(field.id, event.target.value)
+                          }
+                          placeholder={field.placeholder ?? "Escribe tu respuesta"}
+                          type="text"
+                          value={answers[field.id] ?? ""}
+                        />
+                      )}
+                    </label>
+                  ))}
+
+                {question.repeatText &&
+                  (Array.isArray(answer) ? answer : [])
+                    .filter((member) => member !== "Nadie actualmente")
+                    .map((member) => {
+                      const memberIndex =
+                        question.repeatText.options.indexOf(member);
+                      if (memberIndex < 0) {
+                        return null;
+                      }
+                      const fieldId =
+                        `${question.repeatText.prefix}.${memberIndex}`;
+                      return (
+                        <label
+                          className="mt-5 grid gap-2 text-sm font-medium"
+                          key={member}
+                        >
+                          <span>{member}: {question.repeatText.label}</span>
+                          <input
+                            aria-label={`${question.repeatText.label} ${member}`}
+                            className={fieldClass}
+                            onChange={(event) =>
+                              updateStoredAnswer(fieldId, event.target.value)
+                            }
+                            placeholder="Escribe tu respuesta"
+                            type="text"
+                            value={answers[fieldId] ?? ""}
+                          />
+                        </label>
+                      );
+                    })}
 
                 {question.allowUnknown !== false && (
                   <button
