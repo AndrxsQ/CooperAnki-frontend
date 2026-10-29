@@ -144,7 +144,7 @@ const Survey = () => {
                 Encuesta
               </p>
               <h1 className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-                ENCUESTA DE AUTODIAGNÓSTICO EMPRESARIAL
+                ASOCIACION COLECTIVO MUJERES AL DERECHO
               </h1>
             </header>
 
@@ -153,20 +153,16 @@ const Survey = () => {
                 <strong className="text-slate-900 dark:text-slate-100">
                   OBJETIVO.
                 </strong>{" "}
-                Identificar capacidades, experiencia, conocimientos, ingresos,
-                aportes familiares, activos, actividades productivas, oficios,
-                servicios profesionales, clientes y necesidades de inversión
-                para diseñar una ruta de fortalecimiento individual, familiar o
-                asociativo.
+                Evaluar de forma rápida y estructurada la situación actual de un emprendimiento rural para
+                identificar fortalezas, debilidades, riesgos y oportunidades de mejora en áreas productivas, comerciales,
+                financieras, organizativas y ambientales.
               </p>
               <p className="m-0">
                 <strong className="text-slate-900 dark:text-slate-100">
                   Orientaciones:
                 </strong>{" "}
-                aplicar mediante entrevista, preferiblemente en conversación;
-                registrar valores aproximados y período; permitir “No sabe/No
-                responde”. Distinguir ventas, costos, ganancia e ingresos de
-                otras fuentes.
+                Para garantizar la transparencia, efectividad y monitoreo de los datos suministrado se requiere de
+                total compromiso y veracidad en cada respuesta suministrada. Pluricultural sigue una matriz
               </p>
               <p className="m-0">
                 <strong className="text-slate-900 dark:text-slate-100">
@@ -184,12 +180,9 @@ const Survey = () => {
                 type="checkbox"
               />
               <span>
-                ¿La participante acepta voluntariamente responder y el uso de
-                datos con fines de diagnóstico y planeación del proyecto?
-                <span className="mt-2 block text-xs text-slate-500 dark:text-slate-400">
-                  Las respuestas de esta versión preliminar solo permanecerán
-                  durante esta sesión; no se envían ni se guardan.
-                </span>
+                ¿La participante acepta voluntariamente responder esta encuesta y
+                autoriza el uso de sus datos con fines exclusivos de diagnóstico
+                socioempresarial y actualización de información interna.
               </span>
             </label>
 
