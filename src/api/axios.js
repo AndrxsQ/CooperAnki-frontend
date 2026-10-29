@@ -8,12 +8,15 @@ const api = axios.create({
   timeout: 300000,
 });
 
+const isPublicSurveyResponseRequest = (url) =>
+  /(?:^|\/)surveys\/responses(?:[?#]|$)/.test(url ?? "");
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     const isLoginRequest = /\/auth\/login$/.test(config.url ?? "");
 
-    if (token && !isLoginRequest) {
+    if (token && !isLoginRequest && !isPublicSurveyResponseRequest(config.url)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -26,6 +29,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      if (isPublicSurveyResponseRequest(error.config?.url)) {
+        return Promise.reject(error);
+      }
+
       const isLoginRequest = /\/auth\/login$/.test(
         error.config?.url ?? "",
       );
