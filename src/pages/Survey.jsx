@@ -68,33 +68,33 @@ const getQuestionValidationError = (question, answers) => {
       }
     }
   } else if (question.type === "income-details") {
-    if (question.noIncomeAvailable && answers["26.noIncome"] !== true) {
+    if (question.noIncomeAvailable && answers["28.noIncome"] !== true) {
       return "Indica si no recibes ingresos directamente o completa los detalles.";
     }
     for (const source of question.incomeSources) {
-      const detail = answers[`26.detail.${source.index}`];
+      const detail = answers[`28.detail.${source.index}`];
       if (!isAnswered(detail)) {
         return `Completa los detalles de ${source.name}.`;
       }
     }
     if (question.otherIncomeEnabled) {
       for (let index = 0; index < question.otherIncomeCount; index += 1) {
-        if (!isAnswered(answers[`26.otherSource.${index}`])) {
+        if (!isAnswered(answers[`28.otherSource.${index}`])) {
           return `Escribe el nombre del otro ingreso ${index + 1}.`;
         }
-        if (!isAnswered(answers[`26.otherDetail.${index}`])) {
+        if (!isAnswered(answers[`28.otherDetail.${index}`])) {
           return `Completa los detalles del otro ingreso ${index + 1}.`;
         }
       }
     }
   } else if (question.type === "income-amounts") {
-    if (question.noIncomeAvailable && answers["26.noIncome"] !== true) {
+    if (question.noIncomeAvailable && answers["28.noIncome"] !== true) {
       return "Indica si no recibes ingresos directamente o completa los montos.";
     }
     for (const source of question.incomeSources) {
       const amount = source.id.startsWith("other.")
-        ? answers[`26.amount.other.${source.index}`]
-        : answers[`26.amount.${source.index}`];
+        ? answers[`28.amount.other.${source.index}`]
+        : answers[`28.amount.${source.index}`];
       const error = getValidationError(
         { type: "number", min: question.min },
         amount ?? "",
@@ -231,18 +231,18 @@ const Survey = () => {
           <svg
             aria-hidden="true"
             className="h-5 w-5 fill-none stroke-current"
-            viewBox="0 0 24 24"
+            viewBox="0 0 24 26"
           >
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+            <circle cx="14" cy="14" r="4" />
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m13.3 13.3 1.42 1.42M2 12h2m16 0h2M4.93 21.07l1.42-1.42m13.3-13.3 1.42-1.44" />
           </svg>
         ) : (
           <svg
             aria-hidden="true"
             className="h-5 w-5 fill-none stroke-current"
-            viewBox="0 0 24 24"
+            viewBox="0 0 24 26"
           >
-            <path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z" />
+            <path d="M22.5 17.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 22.5 17.5Z" />
           </svg>
         )}
       </button>
@@ -548,24 +548,24 @@ const Survey = () => {
                           className={`${fieldClass} min-h-28 resize-y`}
                           onChange={(event) =>
                             updateStoredAnswer(
-                              `26.detail.${source.index}`,
+                              `28.detail.${source.index}`,
                               event.target.value,
                             )
                           }
                           placeholder="Describe los detalles de este ingreso"
-                          value={answers[`26.detail.${source.index}`] ?? ""}
+                          value={answers[`28.detail.${source.index}`] ?? ""}
                         />
                       </label>
                     ))}
                     {question.noIncomeAvailable && (
                       <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
                         <input
-                          checked={answers["26.noIncome"] === true}
+                          checked={answers["28.noIncome"] === true}
                           className="h-4 w-4 accent-sky-700"
                           onChange={(event) => {
-                            updateStoredAnswer("26.noIncome", event.target.checked);
+                            updateStoredAnswer("28.noIncome", event.target.checked);
                             if (event.target.checked) {
-                              updateStoredAnswer("26.otherEnabled", false);
+                              updateStoredAnswer("28.otherEnabled", false);
                             }
                           }}
                           type="checkbox"
@@ -579,17 +579,17 @@ const Survey = () => {
                         className="h-4 w-4 accent-sky-700"
                         onChange={(event) => {
                           if (event.target.checked) {
-                            updateStoredAnswer("26.noIncome", false);
+                            updateStoredAnswer("28.noIncome", false);
                           }
                           updateStoredAnswer(
-                            "26.otherEnabled",
+                            "28.otherEnabled",
                             event.target.checked,
                           );
                           if (
                             event.target.checked &&
-                            !Number.parseInt(answers["26.otherCount"] ?? "0", 10)
+                            !Number.parseInt(answers["28.otherCount"] ?? "0", 10)
                           ) {
-                            updateStoredAnswer("26.otherCount", "1");
+                            updateStoredAnswer("28.otherCount", "1");
                           }
                         }}
                         type="checkbox"
@@ -608,12 +608,12 @@ const Survey = () => {
                                 className={fieldClass}
                                 onChange={(event) =>
                                   updateStoredAnswer(
-                                    `26.otherSource.${index}`,
+                                    `28.otherSource.${index}`,
                                     event.target.value,
                                   )
                                 }
                                 placeholder="Escribe el nombre del ingreso"
-                                value={answers[`26.otherSource.${index}`] ?? ""}
+                                value={answers[`28.otherSource.${index}`] ?? ""}
                               />
                             </label>
                             <label className="grid gap-2 text-sm font-medium">
@@ -623,12 +623,12 @@ const Survey = () => {
                                 className={`${fieldClass} min-h-28 resize-y`}
                                 onChange={(event) =>
                                   updateStoredAnswer(
-                                    `26.otherDetail.${index}`,
+                                    `28.otherDetail.${index}`,
                                     event.target.value,
                                   )
                                 }
                                 placeholder="Describe los detalles de este ingreso"
-                                value={answers[`26.otherDetail.${index}`] ?? ""}
+                                value={answers[`28.otherDetail.${index}`] ?? ""}
                               />
                             </label>
                           </div>
@@ -639,7 +639,7 @@ const Survey = () => {
                         className={secondaryButtonClass}
                         onClick={() =>
                           updateStoredAnswer(
-                            "26.otherCount",
+                            "28.otherCount",
                             String(question.otherIncomeCount + 1),
                           )
                         }
@@ -654,8 +654,8 @@ const Survey = () => {
                     {question.incomeSources.map((source) => {
                       const fieldId =
                         source.id.startsWith("other.")
-                          ? `26.amount.other.${source.index}`
-                          : `26.amount.${source.index}`;
+                          ? `28.amount.other.${source.index}`
+                          : `28.amount.${source.index}`;
                       return (
                         <label className="grid gap-2 text-sm font-medium" key={source.id}>
                           <span>{source.name}</span>
@@ -677,10 +677,10 @@ const Survey = () => {
                     {question.noIncomeAvailable && (
                       <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
                         <input
-                          checked={answers["26.noIncome"] === true}
+                          checked={answers["28.noIncome"] === true}
                           className="h-4 w-4 accent-sky-700"
                           onChange={(event) =>
-                            updateStoredAnswer("26.noIncome", event.target.checked)
+                            updateStoredAnswer("28.noIncome", event.target.checked)
                           }
                           type="checkbox"
                         />
