@@ -16,6 +16,7 @@ import LegalClients from '../pages/LegalClients';
 import LegalCases from '../pages/LegalCases';
 import LegalHome from '../pages/LegalHome';
 import Survey from '../pages/Survey';
+import SurveyAdmin from '../pages/SurveyAdmin';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -34,6 +35,7 @@ export const AppRouter = () => {
       <Routes>
         <Route path="/login" element={<Login />}/>
         <Route path="/survey" element={<Survey />}/>
+        <Route path="/survey-admin" element={<SurveyAdmin />}/>
         <Route element={<ProtectedRoute />}>
           <Route element={<PublicDashboardLayout />}>
             <Route path="/" element={<Dashboard />}/>

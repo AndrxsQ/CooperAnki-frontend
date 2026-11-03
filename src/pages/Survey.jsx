@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../context/useTheme";
 import { submitSurveyResponse } from "../api/surveys";
 import {
@@ -137,7 +137,7 @@ const getQuestionValidationError = (question, answers) => {
   return "";
 };
 
-const Survey = () => {
+const Survey = ({ isPreview = false }) => {
   const { isDark, toggleTheme } = useTheme();
   const [step, setStep] = useState(-1);
   const [answers, setAnswers] = useState({});
@@ -145,7 +145,7 @@ const Survey = () => {
   const [showValidation, setShowValidation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
-  const [receipt, setReceipt] = useState(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const steps = buildSurveySteps(answers);
 
   const isWelcome = step === -1;
@@ -157,6 +157,20 @@ const Survey = () => {
       ? getQuestionValidationError(question, answers)
       : "";
 
+  useEffect(() => {
+    if (!isSubmitting) {
+      return undefined;
+    }
+
+    const warnBeforeLeaving = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isSubmitting]);
+
   const updateStoredAnswer = (id, value) => {
     setAnswers((current) => ({ ...current, [id]: value }));
     setShowValidation(false);
@@ -166,7 +180,7 @@ const Survey = () => {
 
   const goNext = (event) => {
     event.preventDefault();
-    if (getQuestionValidationError(question, answers)) {
+    if (!isPreview && getQuestionValidationError(question, answers)) {
       setShowValidation(true);
       return;
     }
@@ -185,20 +199,20 @@ const Survey = () => {
     setShowValidation(false);
     setIsSubmitting(false);
     setSubmissionError("");
-    setReceipt(null);
+    setIsSubmitted(false);
     setStep(-1);
   };
 
   const sendSurvey = async () => {
-    if (isSubmitting || receipt) {
+    if (isPreview || isSubmitting || isSubmitted) {
       return;
     }
 
     setIsSubmitting(true);
     setSubmissionError("");
     try {
-      const savedReceipt = await submitSurveyResponse(steps, answers);
-      setReceipt(savedReceipt);
+      await submitSurveyResponse(steps, answers);
+      setIsSubmitted(true);
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -259,7 +273,7 @@ const Survey = () => {
           <div className="grid gap-6">
             <header className="grid gap-3 text-center">
               <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                Encuesta
+                {isPreview ? "Vista previa" : "Encuesta"}
               </p>
               <h1 className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
                 ASOCIACION COLECTIVO MUJERES AL DERECHO
@@ -318,38 +332,44 @@ const Survey = () => {
         ) : isComplete ? (
           <div className="flex flex-1 flex-col justify-center">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-              {receipt ? "Encuesta recibida" : "Mensaje de cierre"}
+              {isPreview
+                ? "Vista previa finalizada"
+                : isSubmitted
+                  ? "Encuesta recibida"
+                  : "Mensaje de cierre"}
             </p>
             <h1 className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              {receipt
-                ? "Gracias por suministrar la información solicitada."
-                : "Tu encuesta está lista para enviarse."}
+              {isPreview
+                ? "Has llegado al final de la encuesta."
+                : isSubmitted
+                  ? "Respuestas enviadas exitosamente."
+                  : "Tu encuesta está lista para enviarse."}
             </h1>
             <div className="mt-5 grid gap-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-              {receipt ? (
-                <>
-                  <p className="m-0">
-                    El servidor recibió y almacenó tus respuestas correctamente.
-                  </p>
-                  <dl className="grid gap-2 rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
-                    <div className="flex flex-wrap gap-2">
-                      <dt className="font-semibold">Identificador:</dt>
-                      <dd className="m-0">{receipt.id}</dd>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <dt className="font-semibold">Fecha de recepción:</dt>
-                      <dd className="m-0">
-                        {new Date(receipt.submittedAt).toLocaleString("es-CO")}
-                      </dd>
-                    </div>
-                  </dl>
-                </>
+              {isPreview ? (
+                <p className="m-0">
+                  Esta vista previa no envía ni guarda respuestas.
+                </p>
+              ) : isSubmitted ? (
+                <p className="m-0">
+                  Gracias por suministrar la información solicitada.
+                </p>
               ) : (
                 <>
                   <p className="m-0">
                     Al enviar, se guardará una copia de las preguntas presentadas
                     y de las respuestas proporcionadas.
                   </p>
+                  {isSubmitting && (
+                    <p
+                      aria-live="assertive"
+                      className="m-0 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-100"
+                      role="alert"
+                    >
+                      Enviando tus respuestas. No cierres esta pestaña hasta que
+                      aparezca la confirmación.
+                    </p>
+                  )}
                   {submissionError && (
                     <p
                       aria-live="polite"
@@ -364,13 +384,13 @@ const Survey = () => {
             </div>
 
             <div className="mt-8 flex justify-end">
-              {receipt ? (
+              {isPreview || isSubmitted ? (
                 <button
                   className={primaryButtonClass}
                   type="button"
                   onClick={restartSurvey}
                 >
-                  Completar otra encuesta
+                  {isPreview ? "Volver al inicio" : "Completar otra encuesta"}
                 </button>
               ) : (
                 <button
