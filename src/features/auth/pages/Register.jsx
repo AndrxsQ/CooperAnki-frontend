@@ -11,9 +11,9 @@ const Register = () => {
     <div className={`auth-page${isDark ? " is-dark" : ""}`}>
       <Header
         variant="landing"
-        loginLabel="Iniciar sesión"
+        loginLabel="Volver al panel"
         isDark={isDark}
-        onLogin={() => navigate("/login")}
+        onLogin={() => navigate("/")}
         onToggleTheme={toggleTheme}
       />
       <RegisterForm />
