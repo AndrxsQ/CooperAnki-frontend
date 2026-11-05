@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export const Header = ({
   user,
@@ -56,6 +57,14 @@ export const Header = ({
               </span>
             </div>
           ) : null}
+          {user?.role?.toUpperCase() === "ADMIN" && (
+            <Link
+              className="rounded-lg px-3 py-2 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              to="/register"
+            >
+              Crear cuenta
+            </Link>
+          )}
           {user && onLogout && (
             <button
               className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-rose-900 dark:hover:bg-rose-950/40 dark:hover:text-rose-200"
@@ -171,6 +180,15 @@ export const Header = ({
                 <strong className="text-[13px]">{user?.nombre || "Usuario"}</strong>
                 <span className="mt-1 break-all text-xs text-slate-600 dark:text-slate-300">{user?.email || ""}</span>
               </div>
+              {user?.role?.toUpperCase() === "ADMIN" && (
+                <Link
+                  className="mt-3 block w-full border-t border-slate-200 pt-2.5 text-left text-[13px] font-medium text-slate-700 hover:text-emerald-800 dark:border-slate-700 dark:text-slate-200 dark:hover:text-emerald-300"
+                  onClick={() => setProfileOpen(false)}
+                  to="/register"
+                >
+                  Crear cuenta
+                </Link>
+              )}
               <button
                 className="mt-3 w-full border-0 border-t border-solid border-slate-200 bg-transparent pt-2.5 text-left text-[13px] text-rose-700 dark:border-slate-700 dark:text-rose-300"
                 type="button"
