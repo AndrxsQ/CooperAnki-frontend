@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTheme } from "../context/useTheme";
+import { useTheme } from "../../../context/useTheme";
 import { submitSurveyResponse } from "../api/surveys";
 import {
   buildSurveySteps,

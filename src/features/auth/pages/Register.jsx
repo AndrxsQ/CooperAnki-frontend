@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Header } from "../components/Header";
+import { Header } from "../../../components/Header";
 import { RegisterForm } from '../components/RegisterForm';
-import { useTheme } from "../context/useTheme";
+import { useTheme } from "../../../context/useTheme";
 
 const Register = () => {
   const navigate = useNavigate();

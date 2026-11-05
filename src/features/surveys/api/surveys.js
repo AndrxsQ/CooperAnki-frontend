@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "../../../api/axios";
 
 const isValidIdentifier = (id) =>
   (typeof id === "string" && id.trim().length > 0) ||
