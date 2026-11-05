@@ -2,12 +2,10 @@ import { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContextValue";
 import api from "../api/axios";
 
-const allowedRoles = new Set(["ADMIN", "EXECUTIVE"]);
-
 const mapUser = (data) => {
   const role = String(data.role ?? "").toUpperCase();
-  if (!allowedRoles.has(role)) {
-    throw new Error("La cuenta no tiene un rol habilitado para acceder.");
+  if (!role) {
+    throw new Error("El servidor no devolvió el rol de la cuenta.");
   }
 
   const name = data.name ?? data.nombre ?? data.username ?? "Usuario";
@@ -18,6 +16,10 @@ const mapUser = (data) => {
     username: data.username,
     email: data.email,
     role,
+    accountSystem: data.accountSystem ?? null,
+    allowedSystems: Array.isArray(data.allowedSystems)
+      ? data.allowedSystems
+      : [],
   };
 };
 
@@ -67,11 +69,7 @@ export const AuthProvider = ({ children }) => {
       })
       .catch((error) => {
         if (active && !controller.signal.aborted) {
-          if (
-            error.response?.status === 401 ||
-            error.message ===
-              "La cuenta no tiene un rol habilitado para acceder."
-          ) {
+          if (error.response?.status === 401) {
             clearInvalidSession();
           } else {
             setUser(null);
