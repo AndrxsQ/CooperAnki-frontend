@@ -3,6 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../api/axios';
+import { Alert } from '../../../components/ui/Alert';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { useAuth } from '../../../context/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
 
@@ -62,76 +65,41 @@ export const LoginForm = () => {
         </div>
 
         {serverError && (
-          <div
-            aria-live="polite"
-            className="mb-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200"
-          >
+          <Alert className="mb-5" variant="error">
             {serverError}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5" noValidate>
-          <div className="grid gap-1.5">
-            <label
-              htmlFor="username"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200"
-            >
-              Nombre de usuario
-            </label>
-            <input
-              id="username"
-              type="text"
-              disabled={isSubmitting}
-              {...register('username')}
-              placeholder="Ej. anagomez"
-              autoComplete="username"
-              className={`h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 ${
-                errors.username
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500'
-                  : 'border-slate-300 focus:border-sky-700 focus:ring-sky-700/15 dark:border-slate-700 dark:focus:border-sky-400'
-              }`}
-            />
-            {errors.username && (
-              <p className="text-xs text-rose-700 dark:text-rose-300">
-                {errors.username.message}
-              </p>
-            )}
-          </div>
+          <Input
+            autoComplete="username"
+            disabled={isSubmitting}
+            error={errors.username?.message}
+            label="Nombre de usuario"
+            placeholder="Ej. anagomez"
+            type="text"
+            {...register('username')}
+          />
 
-          <div className="grid gap-1.5">
-            <label
-              htmlFor="password"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200"
-            >
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              disabled={isSubmitting}
-              {...register('password')}
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className={`h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 ${
-                errors.password
-                  ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500'
-                  : 'border-slate-300 focus:border-sky-700 focus:ring-sky-700/15 dark:border-slate-700 dark:focus:border-sky-400'
-              }`}
-            />
-            {errors.password && (
-              <p className="text-xs text-rose-700 dark:text-rose-300">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+          <Input
+            autoComplete="current-password"
+            disabled={isSubmitting}
+            error={errors.password?.message}
+            label="Contraseña"
+            placeholder="••••••••"
+            type="password"
+            {...register('password')}
+          />
 
-          <button
+          <Button
+            className="mt-1"
             type="submit"
             disabled={isSubmitting}
-            className="mt-1 inline-flex h-11 w-full items-center justify-center rounded-lg bg-sky-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-sky-600 dark:hover:bg-sky-500 dark:focus-visible:outline-sky-400"
+            fullWidth
+            size="lg"
           >
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
+          </Button>
         </form>
       </section>
   );
