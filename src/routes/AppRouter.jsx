@@ -5,6 +5,7 @@ import Dashboard from '../features/territorial/pages/Dashboard';
 import DetailedView from '../features/territorial/pages/DetailedView';
 import EconomicUnitProfile from '../features/economic-units/pages/EconomicUnitProfile';
 import Login from '../features/auth/pages/Login';
+import Register from '../features/auth/pages/Register';
 import Landing from '../features/landing/pages/Landing';
 import CallProposal from '../features/calls/pages/CallProposal';
 import Searching from '../features/calls/pages/Searching';
@@ -37,6 +38,9 @@ export const AppRouter = () => {
         <Route path="/survey" element={<Survey />}/>
         <Route path="/survey-admin" element={<SurveyAdmin />}/>
         <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
+            <Route path="/register" element={<Register />}/>
+          </Route>
           <Route element={<PublicDashboardLayout />}>
             <Route path="/" element={<Dashboard />}/>
             <Route path="/detailed-view" element={<DetailedView />}/>
