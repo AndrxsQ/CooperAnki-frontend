@@ -5,6 +5,8 @@ import Dashboard from '../features/territorial/pages/Dashboard';
 import DetailedView from '../features/territorial/pages/DetailedView';
 import EconomicUnitProfile from '../features/economic-units/pages/EconomicUnitProfile';
 import Login from '../features/auth/pages/Login';
+import ForgotPassword from '../features/auth/pages/ForgotPassword';
+import EmailConfirmation from '../features/auth/pages/EmailConfirmation';
 import Register from '../features/auth/pages/Register';
 import Landing from '../features/landing/pages/Landing';
 import CallProposal from '../features/calls/pages/CallProposal';
@@ -35,6 +37,8 @@ export const AppRouter = () => {
       <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />}/>
+        <Route path="/forgot-password" element={<ForgotPassword />}/>
+        <Route path="/email-confirmation" element={<EmailConfirmation />}/>
         <Route path="/survey" element={<Survey />}/>
         <Route path="/survey-admin" element={<SurveyAdmin />}/>
         <Route element={<ProtectedRoute />}>

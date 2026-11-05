@@ -1,6 +1,7 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import api from '../../../api/axios';
 import { getUserFacingErrorMessage } from '../../../api/httpErrors';
 import { Button } from '../../../components/ui/Button';
@@ -135,6 +136,20 @@ export const LoginForm = () => {
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </form>
+        <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+          <Link
+            className="font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
+            to="/forgot-password"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+          <Link
+            className="font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            to="/email-confirmation"
+          >
+            Confirmar correo
+          </Link>
+        </div>
       </section>
   );
 };
