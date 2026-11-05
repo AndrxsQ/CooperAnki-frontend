@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import SearchBar from "../../../components/SearchBar";
 import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 
@@ -446,10 +447,10 @@ const LegalCases = () => {
           setRelatedUsers({
             status: "error",
             units: [],
-            message:
-              error.response?.data?.message ??
-              error.message ??
+            message: getUserFacingErrorMessage(
+              error,
               "No se pudieron cargar los usuarios relacionados.",
+            ),
           });
         }
       });

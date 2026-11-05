@@ -3,19 +3,24 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../../api/axios';
+import { getUserFacingErrorMessage } from '../../../api/httpErrors';
+import { Alert } from '../../../components/ui/Alert';
+import { useToast } from '../../../context/useToast';
 import { useAuth } from '../../../context/useAuth';
 import { registerSchema } from '../schemas/registerSchema';
 
 export const RegisterForm = () => {
   const { login } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
+    clearErrors,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -23,7 +28,7 @@ export const RegisterForm = () => {
   });
 
   const onSubmit = async (data) => {
-    setServerError('');
+    clearErrors();
     setSuccessMessage('');
 
     // Payload según RegisterRequest del backend (confirmPassword no se envía)
@@ -45,14 +50,27 @@ export const RegisterForm = () => {
       // Redirige al usuario a la landing page
       navigate('/', { replace: true });
     } catch (error) {
-      if (error.response) {
-        const { data: errorData } = error.response;
-        const errorMessage =
-          (typeof errorData === 'string' ? errorData : errorData?.message) ||
-          'Error en el registro. Intenta de nuevo.';
-        setServerError(errorMessage);
-      } else {
-        setServerError('No se pudo conectar con el servidor.');
+      const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          if (
+            ["username", "email", "role", "password", "confirmPassword"].includes(
+              field,
+            ) &&
+            typeof message === "string"
+          ) {
+            setError(field, { type: "server", message });
+          }
+        });
+      }
+
+      if (!error?.isAxiosError) {
+        addToast({
+          message: getUserFacingErrorMessage(
+            error,
+            "No fue posible completar el registro. Intenta de nuevo.",
+          ),
+        });
       }
     }
   };
@@ -72,16 +90,10 @@ export const RegisterForm = () => {
         </div>
 
         {/* Notificaciones de éxito o error */}
-        {serverError && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-            {serverError}
-          </div>
-        )}
-
         {successMessage && (
-          <div className="rounded-lg bg-green-50 p-4 text-sm text-green-700 border border-green-200">
+          <Alert variant="success">
             {successMessage}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>

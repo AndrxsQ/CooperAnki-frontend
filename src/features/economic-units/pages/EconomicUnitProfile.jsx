@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import EconomicUnitProfileView from "../components/EconomicUnitProfileView";
 import { getEconomicUnitById, getEconomicUnits } from "../api/economicUnits";
 import { createTemporaryLegalClients } from "../../legal-management/data/legalClientData";
@@ -45,10 +46,10 @@ const EconomicUnitProfile = ({ mode = "territorial" }) => {
               error.response?.status === 404 || error.status === 404
                 ? "notFound"
                 : "error",
-            message:
-              error.response?.data?.message ??
-              error.message ??
+            message: getUserFacingErrorMessage(
+              error,
               "No se pudo cargar la información del cliente.",
+            ),
           });
         }
       }

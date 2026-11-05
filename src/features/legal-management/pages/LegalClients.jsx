@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import SearchBar from "../../../components/SearchBar";
 import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 import { createTemporaryLegalClients } from "../data/legalClientData";
@@ -65,10 +66,10 @@ const LegalClients = () => {
           setRequest({
             key: retryKey,
             status: "error",
-            message:
-              error.response?.data?.message ??
-              error.message ??
+            message: getUserFacingErrorMessage(
+              error,
               "No se pudieron cargar las unidades económicas.",
+            ),
           });
         }
       });
