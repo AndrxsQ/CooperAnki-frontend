@@ -1,24 +1,26 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../../api/axios';
-import { Alert } from '../../../components/ui/Alert';
+import { getUserFacingErrorMessage } from '../../../api/httpErrors';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { useToast } from '../../../context/useToast';
 import { useAuth } from '../../../context/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
 
 export const LoginForm = () => {
   const { login } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const [serverError, setServerError] = useState('');
 
   // Configuración de REact Hook Form con Zod para validación
   const {
     register,
     handleSubmit,
+    clearErrors,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
@@ -27,7 +29,7 @@ export const LoginForm = () => {
 
   // Solo se ejecuta si la validación de Zod pasa
   const onSubmit = async (data) => {
-    setServerError(''); // Limpiamos errores previos
+    clearErrors();
     try {
       // data coincide con LoginRequest del backend: { username, password }
       const response = await api.post('/auth/login', data);
@@ -40,12 +42,25 @@ export const LoginForm = () => {
         : '/';
       navigate(destination, { replace: true });
     } catch (error) {
-      if(error.response){
-        const message = error.response.data?.message || 'Credenciales incorrectas. Intenta de nuevo.';
-        setServerError(message);
-      } else {
-        const message = error.message || 'Error en el servidor. Intenta de nuevo.';
-        setServerError(message);
+      const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          if (
+            ["username", "password"].includes(field) &&
+            typeof message === "string"
+          ) {
+            setError(field, { type: "server", message });
+          }
+        });
+      }
+
+      if (!error?.isAxiosError) {
+        addToast({
+          message: getUserFacingErrorMessage(
+            error,
+            "No fue posible iniciar sesión. Intenta de nuevo.",
+          ),
+        });
       }
     }
   };
@@ -63,12 +78,6 @@ export const LoginForm = () => {
             Ingresa tus credenciales para acceder
           </p>
         </div>
-
-        {serverError && (
-          <Alert className="mb-5" variant="error">
-            {serverError}
-          </Alert>
-        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5" noValidate>
           <Input

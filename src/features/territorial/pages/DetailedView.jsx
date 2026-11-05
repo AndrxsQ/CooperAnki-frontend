@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import SearchBar from "../../../components/SearchBar";
 import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 
@@ -69,10 +70,10 @@ const DetailedView = () => {
           setRequest({
             key: retryKey,
             status: "error",
-            message:
-              error.response?.data?.message ??
-              error.message ??
+            message: getUserFacingErrorMessage(
+              error,
               "No se pudieron cargar los datos del backend.",
+            ),
           });
         }
       });

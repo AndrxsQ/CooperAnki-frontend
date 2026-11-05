@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import { useTheme } from "../../../context/useTheme";
 import { submitSurveyResponse } from "../api/surveys";
 import {
@@ -214,11 +215,12 @@ const Survey = ({ isPreview = false }) => {
       await submitSurveyResponse(steps, answers);
       setIsSubmitted(true);
     } catch (error) {
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "No fue posible enviar la encuesta. Revisa tu conexión e inténtalo de nuevo.";
-      setSubmissionError(message);
+      setSubmissionError(
+        getUserFacingErrorMessage(
+          error,
+          "No fue posible enviar la encuesta. Revisa tu conexión e inténtalo de nuevo.",
+        ),
+      );
     } finally {
       setIsSubmitting(false);
     }

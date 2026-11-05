@@ -69,7 +69,6 @@ export const AuthProvider = ({ children }) => {
         if (active && !controller.signal.aborted) {
           if (
             error.response?.status === 401 ||
-            error.response?.status === 403 ||
             error.message ===
               "La cuenta no tiene un rol habilitado para acceder."
           ) {
@@ -114,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
-  const isAuthenticated = Boolean(token && user);
+  const isAuthenticated = Boolean(token);
 
   return (
     <AuthContext.Provider
