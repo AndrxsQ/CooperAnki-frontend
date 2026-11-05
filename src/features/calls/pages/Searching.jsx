@@ -1,6 +1,6 @@
 import { useState } from "react";
 import FilterPanel from "../components/FilterPanel";
-import SearchBar from "../components/SearchBar";
+import SearchBar from "../../../components/SearchBar";
 
 const Searching = () => {
   const [query, setQuery] = useState("");

@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Footer } from "../components/Footer";
-import { Header } from "../components/Header";
-import { useAuth } from "../context/useAuth";
-import { useTheme } from "../context/useTheme";
+import { Footer } from "../../../components/Footer";
+import { Header } from "../../../components/Header";
+import { useAuth } from "../../../context/useAuth";
+import { useTheme } from "../../../context/useTheme";
 
 const successStories = [
   {

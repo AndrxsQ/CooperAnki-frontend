@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../api/axios';
-import { useAuth } from '../context/useAuth';
+import api from '../../../api/axios';
+import { useAuth } from '../../../context/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
 
 export const LoginForm = () => {

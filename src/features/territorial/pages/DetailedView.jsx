@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../components/SearchBar";
-import { getEconomicUnits } from "../api/economicUnits";
+import SearchBar from "../../../components/SearchBar";
+import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 
 const initialFilters = {
   name: "",

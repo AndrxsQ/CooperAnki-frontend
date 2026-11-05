@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import EconomicUnitProfileView from "../components/EconomicUnitProfileView";
 import { getEconomicUnitById, getEconomicUnits } from "../api/economicUnits";
-import { createTemporaryLegalClients } from "../data/legalClientData";
+import { createTemporaryLegalClients } from "../../legal-management/data/legalClientData";
 
 const EconomicUnitProfile = ({ mode = "territorial" }) => {
   const { id } = useParams();

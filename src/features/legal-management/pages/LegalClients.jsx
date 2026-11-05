@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../components/SearchBar";
-import { getEconomicUnits } from "../api/economicUnits";
+import SearchBar from "../../../components/SearchBar";
+import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 import { createTemporaryLegalClients } from "../data/legalClientData";
 
 const pageSizeOptions = [10, 25, 50];

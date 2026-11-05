@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "../../../api/axios";
 
 const requireArray = (data, resource) => {
   if (!Array.isArray(data)) {
