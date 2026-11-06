@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 
-export const ProtectedRoute = ({ requiredRole }) => {
+export const ProtectedRoute = ({ requiredRole, requiredSystem }) => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
@@ -35,6 +35,26 @@ export const ProtectedRoute = ({ requiredRole }) => {
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             No tienes permisos para acceder a esta sección.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (
+    requiredSystem &&
+    !user?.allowedSystems?.some(
+      (system) => system.toUpperCase() === requiredSystem.toUpperCase(),
+    )
+  ) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center dark:bg-slate-950">
+        <div className="max-w-md">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            Sistema no habilitado
+          </h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            Tu cuenta no tiene acceso al sistema requerido para esta sección.
           </p>
         </div>
       </main>

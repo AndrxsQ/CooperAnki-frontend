@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import { useAuth } from "../../../context/useAuth";
 import { Alert } from "../../../components/ui/Alert";
@@ -77,6 +78,12 @@ const ProjectCard = ({ project }) => (
           {project.executiveSummary}
         </p>
       )}
+      <Link
+        className="mt-3 inline-flex w-fit text-sm font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
+        to={`/projects/${project.id}/edit`}
+      >
+        Editar propuesta
+      </Link>
     </div>
     <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:min-w-48 sm:grid-cols-1">
       <div>
@@ -275,15 +282,25 @@ export const ProjectDashboardSection = () => {
       className="grid scroll-mt-24 gap-5"
     >
       <header className="grid gap-2">
-        <h2
-          className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
-          id="projects-dashboard-title"
-        >
-          Gestión de proyectos
-        </h2>
-        <p className="m-0 text-sm text-slate-600 dark:text-slate-300">
-          Consulta y filtra las propuestas socioeconómicas registradas.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid gap-2">
+            <h2
+              className="m-0 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
+              id="projects-dashboard-title"
+            >
+              Gestión de proyectos
+            </h2>
+            <p className="m-0 text-sm text-slate-600 dark:text-slate-300">
+              Consulta y filtra las propuestas socioeconómicas registradas.
+            </p>
+          </div>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-transparent bg-emerald-800 px-4 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+            to="/projects/new"
+          >
+            Registrar propuesta
+          </Link>
+        </div>
       </header>
 
       {summaryError && (

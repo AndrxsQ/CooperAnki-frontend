@@ -7,6 +7,41 @@ export const projectStatuses = [
   { value: "FUNDED", label: "Financiado" },
 ];
 
+const isProjectResponse = (project) =>
+  project &&
+  Number.isInteger(Number(project.id)) &&
+  Number.isInteger(Number(project.organizationId)) &&
+  typeof project.identifierCode === "string" &&
+  typeof project.title === "string" &&
+  typeof project.status === "string";
+
+const requireProjectResponse = (data) => {
+  if (!isProjectResponse(data)) {
+    throw new Error("La respuesta del proyecto no tiene el formato esperado.");
+  }
+  return data;
+};
+
+export const getProjectById = async (id, signal) => {
+  const { data } = await api.get(`/projects/${encodeURIComponent(id)}`, {
+    signal,
+  });
+  return requireProjectResponse(data);
+};
+
+export const createProject = async (project) => {
+  const { data } = await api.post("/projects", project);
+  return requireProjectResponse(data);
+};
+
+export const updateProject = async (id, project) => {
+  const { data } = await api.put(
+    `/projects/${encodeURIComponent(id)}`,
+    project,
+  );
+  return requireProjectResponse(data);
+};
+
 export const getProjects = async (
   { query = "", status = "", page = 0, size = 10, signal } = {},
 ) => {
@@ -28,13 +63,7 @@ export const getProjects = async (
     !Number.isInteger(data.size) ||
     !Number.isInteger(data.totalElements) ||
     !Number.isInteger(data.totalPages) ||
-    data.content.some(
-      (project) =>
-        !Number.isInteger(Number(project?.id)) ||
-        typeof project?.identifierCode !== "string" ||
-        typeof project?.title !== "string" ||
-        typeof project?.status !== "string",
-    )
+    data.content.some((project) => !isProjectResponse(project))
   ) {
     throw new Error("La respuesta de proyectos no tiene el formato esperado.");
   }
