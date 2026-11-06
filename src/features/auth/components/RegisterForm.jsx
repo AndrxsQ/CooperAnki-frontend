@@ -1,19 +1,34 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../../../api/axios';
-import { getUserFacingErrorMessage } from '../../../api/httpErrors';
-import { Alert } from '../../../components/ui/Alert';
-import { useToast } from '../../../context/useToast';
-import { useAuth } from '../../../context/useAuth';
-import { registerSchema } from '../schemas/registerSchema';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getUserFacingErrorMessage } from "../../../api/httpErrors";
+import { Alert } from "../../../components/ui/Alert";
+import { Button } from "../../../components/ui/Button";
+import { Input } from "../../../components/ui/Input";
+import { useToast } from "../../../context/useToast";
+import { getAvailableRoles, createUser } from "../api/auth";
+import { registerSchema } from "../schemas/registerSchema";
+
+const defaultValues = {
+  fullName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  roleId: "",
+  organizationId: "",
+};
 
 export const RegisterForm = () => {
-  const { login } = useAuth();
   const { addToast } = useToast();
-  const navigate = useNavigate();
-  const [successMessage, setSuccessMessage] = useState('');
+  const [roles, setRoles] = useState([]);
+  const [rolesStatus, setRolesStatus] = useState({
+    key: 0,
+    status: "loading",
+    message: "",
+  });
+  const [retryRoles, setRetryRoles] = useState(0);
+  const [createdUser, setCreatedUser] = useState(null);
 
   const {
     register,
@@ -24,37 +39,64 @@ export const RegisterForm = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerSchema),
-    mode: 'onTouched',
+    mode: "onTouched",
+    defaultValues,
   });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getAvailableRoles(controller.signal)
+      .then((availableRoles) => {
+        if (!controller.signal.aborted) {
+          setRoles(availableRoles);
+          setRolesStatus({
+            key: retryRoles,
+            status: "success",
+            message: "",
+          });
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setRoles([]);
+          setRolesStatus({
+            key: retryRoles,
+            status: "error",
+            message: getUserFacingErrorMessage(
+              error,
+              "No se pudieron cargar los roles disponibles.",
+            ),
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, [retryRoles]);
+  const rolesLoading =
+    rolesStatus.key !== retryRoles || rolesStatus.status === "loading";
 
   const onSubmit = async (data) => {
     clearErrors();
-    setSuccessMessage('');
+    setCreatedUser(null);
 
-    // Payload según RegisterRequest del backend (confirmPassword no se envía)
-    const payload = {
-      username: data.username,
-      email: data.email,
-      password: data.password,
-      role: data.role,
-    };
     try {
-      const response = await api.post('/auth/register', payload);
+      const user = await createUser({
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        roleId: data.roleId,
+        organizationId: data.organizationId,
+      });
 
-      // El backend responde con el mismo AuthResponse del login (incluye el JWT)
-      login(response.data);
-
-      setSuccessMessage('Registro exitoso. Tu sesión ya está iniciada.');
-      reset(); // Resetea el formulario después del registro exitoso
-
-      // Redirige al usuario a la landing page
-      navigate('/', { replace: true });
+      setCreatedUser(user);
+      reset(defaultValues);
     } catch (error) {
       const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;
       if (fieldErrors && typeof fieldErrors === "object") {
         Object.entries(fieldErrors).forEach(([field, message]) => {
           if (
-            ["username", "email", "role", "password", "confirmPassword"].includes(
+            ["fullName", "email", "password", "roleId", "organizationId"].includes(
               field,
             ) &&
             typeof message === "string"
@@ -68,7 +110,7 @@ export const RegisterForm = () => {
         addToast({
           message: getUserFacingErrorMessage(
             error,
-            "No fue posible completar el registro. Intenta de nuevo.",
+            "No fue posible registrar la cuenta.",
           ),
         });
       }
@@ -76,167 +118,174 @@ export const RegisterForm = () => {
   };
 
   return (
-    <div className="auth-form-shell flex items-center justify-center bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="auth-form-card w-full max-w-md space-y-6 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
-
-        {/* Encabezado */}
-        <div className="text-center">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-            Crear Cuenta
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Regístrate para acceder a la plataforma
+    <div className="auth-form-shell flex items-center justify-center bg-gray-50 p-4 pt-24 sm:p-6 sm:pt-28 lg:p-8 lg:pt-28">
+      <section className="auth-form-card w-full max-w-xl space-y-6 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+        <header className="text-center">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
+            Coopera2075 · Administración
           </p>
-        </div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            Registrar cuenta
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Crea una cuenta Coopera asignándole un rol disponible.
+          </p>
+        </header>
 
-        {/* Notificaciones de éxito o error */}
-        {successMessage && (
+        {createdUser && (
           <Alert variant="success">
-            {successMessage}
+            Cuenta creada para {createdUser.fullName} ({createdUser.role}).
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {!rolesLoading && rolesStatus.status === "error" && (
+          <Alert variant="error">
+            <div className="grid justify-items-start gap-3">
+              <span>{rolesStatus.message}</span>
+              <Button
+                onClick={() => setRetryRoles((retry) => retry + 1)}
+                size="sm"
+                variant="outline"
+              >
+                Reintentar carga de roles
+              </Button>
+            </div>
+          </Alert>
+        )}
 
-          {/* Nombre de usuario */}
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Nombre de usuario
-            </label>
-            <input
-              id="username"
-              type="text"
-              disabled={isSubmitting}
-              {...register('username')}
-              placeholder="Ej. anagomez"
-              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
-                errors.username
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
-              }`}
-            />
-            {errors.username && (
-              <p className="mt-1 text-xs text-red-600">{errors.username.message}</p>
-            )}
-          </div>
+        {!rolesLoading &&
+          rolesStatus.status === "success" &&
+          roles.length === 0 && (
+          <Alert variant="warning">
+            No hay roles disponibles para crear cuentas.
+          </Alert>
+        )}
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Correo Electrónico
-            </label>
-            <input
-              id="email"
-              type="email"
-              disabled={isSubmitting}
-              {...register('email')}
-              placeholder="usuario@ejemplo.com"
-              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
-                errors.email
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
-              }`}
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Tipo de cuenta (rol) */}
-          <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-              Tipo de cuenta
-            </label>
-            <select
-              id="role"
-              disabled={isSubmitting}
-              {...register('role')}
-              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
-                errors.role
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
-              }`}
-            >
-              <option value="">Selecciona una opción</option>
-              <option value="FUNDER">Financiador (invierte en convocatorias)</option>
-              <option value="MANAGER">Gestor (administra proyectos)</option>
-            </select>
-            {errors.role && (
-              <p className="mt-1 text-xs text-red-600">{errors.role.message}</p>
-            )}
-          </div>
-
-          {/* Contraseña */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              disabled={isSubmitting}
-              {...register('password')}
-              placeholder="••••••••"
-              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
-                errors.password
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
-              }`}
-            />
-            {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-            )}
-          </div>
-
-          {/* Confirmar Contraseña */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirmar Contraseña
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              disabled={isSubmitting}
-              {...register('confirmPassword')}
-              placeholder="••••••••"
-              className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm shadow-sm transition focus:outline-none focus:ring-2 ${
-                errors.confirmPassword
-                  ? 'border-red-500 focus:ring-red-200'
-                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-200'
-              }`}
-            />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          {/* Botón de envío */}
-          <button
-            type="submit"
+        <form
+          className="grid gap-4"
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          <Input
+            autoComplete="name"
             disabled={isSubmitting}
-            className="flex w-full justify-center items-center rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                Registrando...
-              </span>
-            ) : (
-              'Registrarse'
-            )}
-          </button>
+            error={errors.fullName?.message}
+            label="Nombre completo"
+            maxLength={150}
+            placeholder="Nombre y apellido"
+            {...register("fullName")}
+          />
 
+          <Input
+            autoComplete="email"
+            disabled={isSubmitting}
+            error={errors.email?.message}
+            label="Correo electrónico"
+            maxLength={150}
+            placeholder="persona@ejemplo.com"
+            type="email"
+            {...register("email")}
+          />
+
+          <label className="grid gap-1.5">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Rol
+            </span>
+            <select
+              aria-describedby={errors.roleId ? "register-role-error" : undefined}
+              aria-invalid={Boolean(errors.roleId)}
+              className={`h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950 dark:text-slate-100 ${
+                errors.roleId
+                  ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500"
+                  : "border-slate-300 focus:border-emerald-700 focus:ring-emerald-700/15 dark:border-slate-700 dark:focus:border-emerald-400"
+              }`}
+              disabled={
+                isSubmitting ||
+                rolesLoading ||
+                rolesStatus.status !== "success" ||
+                roles.length === 0
+              }
+              {...register("roleId")}
+            >
+              <option value="">
+                {rolesLoading
+                  ? "Cargando roles..."
+                  : "Selecciona un rol"}
+              </option>
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                  {role.description ? ` — ${role.description}` : ""}
+                </option>
+              ))}
+            </select>
+            {errors.roleId && (
+              <p
+                className="text-xs text-rose-700 dark:text-rose-300"
+                id="register-role-error"
+              >
+                {errors.roleId.message}
+              </p>
+            )}
+          </label>
+
+          <Input
+            autoComplete="new-password"
+            disabled={isSubmitting}
+            error={errors.password?.message}
+            hint="Entre 8 y 72 caracteres."
+            label="Contraseña"
+            maxLength={72}
+            type="password"
+            {...register("password")}
+          />
+
+          <Input
+            autoComplete="new-password"
+            disabled={isSubmitting}
+            error={errors.confirmPassword?.message}
+            label="Confirmar contraseña"
+            maxLength={72}
+            type="password"
+            {...register("confirmPassword")}
+          />
+
+          <Input
+            disabled={isSubmitting}
+            error={errors.organizationId?.message}
+            hint="Opcional. Debe ser el ID de una organización existente."
+            label="ID de organización (opcional)"
+            min="1"
+            step="1"
+            type="number"
+            {...register("organizationId")}
+          />
+
+          <Button
+            className="mt-2"
+            disabled={
+              isSubmitting ||
+              rolesLoading ||
+              rolesStatus.status !== "success" ||
+              roles.length === 0
+            }
+            fullWidth
+            size="lg"
+            type="submit"
+          >
+            {isSubmitting ? "Registrando cuenta..." : "Registrar cuenta"}
+          </Button>
         </form>
+
         <p className="text-center text-sm text-gray-600">
-          ¿Ya tienes una cuenta?{" "}
-          <Link className="font-semibold text-emerald-700 hover:text-emerald-900" to="/login">
-            Inicia sesión aquí
+          <Link
+            className="font-semibold text-emerald-700 hover:text-emerald-900"
+            to="/"
+          >
+            Volver al panel
           </Link>
         </p>
-      </div>
+      </section>
     </div>
   );
 };

@@ -76,9 +76,9 @@ const Landing = () => {
               <button
                 className="landing-primary-button"
                 type="button"
-                onClick={() => navigate(isAuthenticated ? "/searching" : "/register")}
+                onClick={() => navigate(isAuthenticated ? "/searching" : "/login")}
               >
-                {isAuthenticated ? "Explorar oportunidades" : "Únete a la comunidad"}
+                {isAuthenticated ? "Explorar oportunidades" : "Iniciar sesión"}
               </button>
               <a className="landing-secondary-link" href="#casos-de-exito">
                 Conoce nuestro impacto <span aria-hidden="true">↓</span>

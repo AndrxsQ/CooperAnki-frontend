@@ -1,4 +1,5 @@
 import { dashboardRecords } from "../data/dashboardData";
+import { ProjectDashboardSection } from "../../projects/components/ProjectDashboardSection";
 
 const numberFormatter = new Intl.NumberFormat("es-CO");
 
@@ -90,9 +91,15 @@ const Dashboard = () => (
         Dashboard
       </h1>
       <p className="m-0 max-w-[680px] text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-        Resumen de las unidades económicas incluidas en los datos provisionales.
+        Resumen de proyectos y de las unidades económicas del territorio.
       </p>
     </div>
+
+    <ProjectDashboardSection />
+
+    <h2 className="m-0 text-xl font-bold text-slate-900 dark:text-slate-100">
+      Indicadores territoriales
+    </h2>
 
     <div
       aria-label="Indicadores generales"

@@ -1,6 +1,7 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import api from '../../../api/axios';
 import { getUserFacingErrorMessage } from '../../../api/httpErrors';
 import { Button } from '../../../components/ui/Button';
@@ -21,17 +22,20 @@ export const LoginForm = () => {
     handleSubmit,
     clearErrors,
     setError,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
+    defaultValues: { system: "COOPERA" },
   });
+  const loginSystem = useWatch({ control, name: "system" });
 
   // Solo se ejecuta si la validación de Zod pasa
   const onSubmit = async (data) => {
     clearErrors();
     try {
-      // data coincide con LoginRequest del backend: { username, password }
+      // The LoginRequest accepts an optional system to disambiguate accounts.
       const response = await api.post('/auth/login', data);
 
       login(response.data);
@@ -80,13 +84,35 @@ export const LoginForm = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5" noValidate>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Sistema
+            </span>
+            <select
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              disabled={isSubmitting}
+              {...register("system")}
+            >
+              <option value="COOPERA">Coopera2075</option>
+              <option value="ECONOMIC_UNITS">Unidades económicas</option>
+            </select>
+          </label>
+
           <Input
             autoComplete="username"
             disabled={isSubmitting}
             error={errors.username?.message}
-            label="Nombre de usuario"
-            placeholder="Ej. anagomez"
-            type="text"
+            label={
+              loginSystem === "COOPERA"
+                ? "Correo electrónico"
+                : "Usuario o correo electrónico"
+            }
+            placeholder={
+              loginSystem === "COOPERA"
+                ? "persona@ejemplo.com"
+                : "Usuario o correo electrónico"
+            }
+            type={loginSystem === "COOPERA" ? "email" : "text"}
             {...register('username')}
           />
 
@@ -110,6 +136,20 @@ export const LoginForm = () => {
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </form>
+        <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+          <Link
+            className="font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
+            to="/forgot-password"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+          <Link
+            className="font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            to="/email-confirmation"
+          >
+            Confirmar correo
+          </Link>
+        </div>
       </section>
   );
 };
