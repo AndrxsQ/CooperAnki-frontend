@@ -170,7 +170,7 @@ const DetailedView = () => {
           Vista General
         </h1>
         <p className="m-0 max-w-[680px] text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          Consulta y filtra las unidades económicas de la organización.
+          Consulta y filtra los registros de Gestión de Información de la organización.
         </p>
       </div>
 
@@ -238,7 +238,7 @@ const DetailedView = () => {
             id="records-title"
             className="text-base font-semibold text-slate-900 dark:text-slate-100"
           >
-            Unidades económicas
+            Gestión de Información
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
             {numberFormatter.format(totalRecords)} registros encontrados
@@ -279,7 +279,7 @@ const DetailedView = () => {
                     className="px-5 py-10 text-center text-slate-500 dark:text-slate-300"
                     colSpan={11}
                   >
-                    Cargando unidades económicas...
+                    Cargando Gestión de Información...
                   </td>
                 </tr>
               ) : loadError ? (

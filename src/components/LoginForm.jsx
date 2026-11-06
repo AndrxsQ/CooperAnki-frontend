@@ -51,7 +51,7 @@ export const LoginForm = () => {
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-7 text-center">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
-            Coopera2075
+            Cooperación
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Iniciar Sesión

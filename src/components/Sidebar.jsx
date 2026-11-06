@@ -68,7 +68,7 @@ const Sidebar = ({ isOpen, onClose, showPublicGroups = false }) => {
           >
             C
           </span>
-          <span>Coopera2075</span>
+          <span>Cooperación</span>
         </div>
 
         <nav

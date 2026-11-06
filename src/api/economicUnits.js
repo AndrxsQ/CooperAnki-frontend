@@ -47,7 +47,7 @@ export const getEconomicUnits = async (signal) => {
     ]);
 
   return {
-    units: requireArray(unitsResponse.data, "unidades económicas").map(
+    units: requireArray(unitsResponse.data, "Gestión de Información").map(
       mapEconomicUnit,
     ),
     departments: requireArray(departmentsResponse.data, "departamentos"),

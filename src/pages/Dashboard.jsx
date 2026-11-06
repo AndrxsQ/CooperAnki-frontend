@@ -16,7 +16,7 @@ const nodeCounts = countBy("node");
 
 const summaryCards = [
   {
-    title: "Unidades económicas",
+    title: "Gestión de Información",
     value: dashboardRecords.length,
     description: "Registros cargados en los datos provisionales",
   },
@@ -28,7 +28,7 @@ const summaryCards = [
   {
     title: "Nodos",
     value: nodeCounts.length,
-    description: "Nodos con unidades económicas registradas",
+    description: "Nodos con registros en Gestión de Información",
   },
   {
     title: "Con correo electrónico",
@@ -90,7 +90,7 @@ const Dashboard = () => (
         Dashboard
       </h1>
       <p className="m-0 max-w-[680px] text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-        Resumen de las unidades económicas incluidas en los datos provisionales.
+        Resumen de los registros disponibles en Gestión de Información.
       </p>
     </div>
 
@@ -119,11 +119,11 @@ const Dashboard = () => (
 
     <div className="grid gap-6 xl:grid-cols-2">
       <DistributionCard
-        title="Unidades económicas por municipio"
+        title="Registros de Gestión de Información por municipio"
         items={municipalityCounts}
       />
       <DistributionCard
-        title="Unidades económicas por nodo"
+        title="Registros de Gestión de Información por nodo"
         items={nodeCounts}
       />
     </div>
