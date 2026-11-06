@@ -84,6 +84,12 @@ const ProjectCard = ({ project }) => (
       >
         Editar propuesta
       </Link>
+      <Link
+        className="ml-4 inline-flex w-fit text-sm font-semibold text-sky-800 hover:text-sky-950 dark:text-sky-300 dark:hover:text-sky-200"
+        to={`/projects/${project.id}/edit?section=attachments`}
+      >
+        Gestionar adjuntos
+      </Link>
     </div>
     <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:min-w-48 sm:grid-cols-1">
       <div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { getUserFacingErrorMessage } from "../../../api/httpErrors";
@@ -15,6 +15,10 @@ import {
 } from "../api/projects";
 import { projectSchema } from "../schemas/projectSchema";
 
+const ProjectAttachmentsPanel = lazy(
+  () => import("./ProjectAttachmentsPanel"),
+);
+
 const steps = [
   {
     title: "Identificación",
@@ -25,6 +29,11 @@ const steps = [
     title: "Detalles y cronograma",
     description: "Resumen, presupuesto y fechas de ejecución.",
     fields: ["executiveSummary", "requestedBudget", "startsAt", "closesAt"],
+  },
+  {
+    title: "Archivos adjuntos",
+    description: "Carga y administra los documentos vinculados al proyecto.",
+    fields: [],
   },
 ];
 
@@ -47,11 +56,13 @@ const toDateTimeLocal = (value) => {
 };
 
 const toPayload = (values) => ({
-  organizationId: values.organizationId,
+  organizationId: Number(values.organizationId),
   identifierCode: values.identifierCode.trim(),
   title: values.title.trim(),
   executiveSummary: values.executiveSummary.trim() || null,
-  requestedBudget: values.requestedBudget,
+  requestedBudget: values.requestedBudget
+    ? Number(values.requestedBudget)
+    : null,
   startsAt: values.startsAt ? new Date(values.startsAt).toISOString() : null,
   closesAt: values.closesAt ? new Date(values.closesAt).toISOString() : null,
 });
@@ -60,8 +71,12 @@ export const ProjectWizard = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { addToast } = useToast();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() =>
+    isEditing && searchParams.get("section") === "attachments" ? 2 : 0,
+  );
+  const [savedProjectId, setSavedProjectId] = useState(id ?? null);
   const [organizations, setOrganizations] = useState([]);
   const [organizationsState, setOrganizationsState] = useState({
     key: null,
@@ -87,6 +102,7 @@ export const ProjectWizard = () => {
   });
 
   useEffect(() => {
+    if (step === 2) return undefined;
     const controller = new AbortController();
     getOrganizations(controller.signal)
       .then((items) => {
@@ -108,10 +124,10 @@ export const ProjectWizard = () => {
         }
       });
     return () => controller.abort();
-  }, [retryKey]);
+  }, [retryKey, step]);
 
   useEffect(() => {
-    if (!isEditing) return undefined;
+    if (!isEditing || step === 2) return undefined;
     const controller = new AbortController();
     getProjectById(id, controller.signal)
       .then((project) => {
@@ -144,7 +160,7 @@ export const ProjectWizard = () => {
         }
       });
     return () => controller.abort();
-  }, [id, isEditing, reset]);
+  }, [id, isEditing, reset, step]);
 
   const loadingOrganizations =
     organizationsState.key !== retryKey ||
@@ -156,6 +172,7 @@ export const ProjectWizard = () => {
       : "";
   const loadingProject =
     isEditing &&
+    step !== 2 &&
     (projectState.key !== id || projectState.status === "loading");
   const projectError =
     isEditing && projectState.key === id && projectState.status === "error"
@@ -173,13 +190,14 @@ export const ProjectWizard = () => {
       const project = isEditing
         ? await updateProject(id, payload)
         : await createProject(payload);
+      setSavedProjectId(String(project.id));
+      setStep(2);
       addToast({
         message: isEditing
-          ? "El proyecto se actualizó correctamente."
-          : "El proyecto se creó correctamente.",
+          ? "El proyecto se guardó. Puedes gestionar sus adjuntos."
+          : "El proyecto se creó. Ahora puedes agregar sus adjuntos.",
         variant: "success",
       });
-      navigate("/", { replace: true, state: { projectId: project.id } });
     } catch (error) {
       const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;
       if (fieldErrors && typeof fieldErrors === "object") {
@@ -276,6 +294,50 @@ export const ProjectWizard = () => {
           Cargando proyecto...
         </div>
       ) : !projectError && (
+        step === 2 ? (
+          <div className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900">
+            {savedProjectId ? (
+              <Suspense
+                fallback={
+                  <div
+                    aria-live="polite"
+                    className="py-8 text-center text-sm text-slate-600 dark:text-slate-300"
+                    role="status"
+                  >
+                    Cargando gestor de adjuntos...
+                  </div>
+                }
+              >
+                <ProjectAttachmentsPanel projectId={savedProjectId} />
+              </Suspense>
+            ) : (
+              <Alert title="Guarda la propuesta primero" variant="info">
+                Los archivos se vinculan a una propuesta guardada. Vuelve al
+                paso anterior y guarda los datos para continuar.
+              </Alert>
+            )}
+            <div className="flex flex-wrap justify-between gap-3 border-t border-slate-200 pt-5 dark:border-slate-700">
+              <Button
+                onClick={() => setStep(1)}
+                type="button"
+                variant="outline"
+              >
+                Volver a los detalles
+              </Button>
+              <Button
+                onClick={() =>
+                  navigate("/", {
+                    replace: true,
+                    state: { projectId: savedProjectId },
+                  })
+                }
+                type="button"
+              >
+                Finalizar
+              </Button>
+            </div>
+          </div>
+        ) : (
         <form
           className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-slate-700 dark:bg-slate-900"
           noValidate
@@ -407,7 +469,7 @@ export const ProjectWizard = () => {
             >
               Anterior
             </Button>
-            {step < steps.length - 1 ? (
+            {step === 0 ? (
               <Button
                 disabled={isSubmitting || loadingOrganizations}
                 onClick={goToNextStep}
@@ -420,12 +482,13 @@ export const ProjectWizard = () => {
                 {isSubmitting
                   ? "Guardando..."
                   : isEditing
-                    ? "Guardar cambios"
-                    : "Crear propuesta"}
+                    ? "Guardar y gestionar adjuntos"
+                    : "Crear y gestionar adjuntos"}
               </Button>
             )}
           </div>
         </form>
+        )
       )}
     </section>
   );
