@@ -1,22 +1,26 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 
-import Dashboard from '../pages/Dashboard';
-import DetailedView from '../pages/DetailedView';
-import EconomicUnitProfile from '../pages/EconomicUnitProfile';
-import Login from '../pages/Login';
-import Landing from '../pages/Landing';
-import CallProposal from '../pages/CallProposal';
-import Searching from '../pages/Searching';
-import Payments from '../pages/Payments';
+import Dashboard from '../features/territorial/pages/Dashboard';
+import DetailedView from '../features/territorial/pages/DetailedView';
+import EconomicUnitProfile from '../features/economic-units/pages/EconomicUnitProfile';
+import Login from '../features/auth/pages/Login';
+import ForgotPassword from '../features/auth/pages/ForgotPassword';
+import EmailConfirmation from '../features/auth/pages/EmailConfirmation';
+import Register from '../features/auth/pages/Register';
+import { ProjectWizard } from '../features/projects/components/ProjectWizard';
+import Landing from '../features/landing/pages/Landing';
+import CallProposal from '../features/calls/pages/CallProposal';
+import Searching from '../features/calls/pages/Searching';
+import Payments from '../features/calls/pages/Payments';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import MainLayout from '../components/MainLayout';
 import PublicDashboardLayout from '../components/PublicDashboardLayout';
-import LegalClients from '../pages/LegalClients';
-import LegalCases from '../pages/LegalCases';
-import LegalHome from '../pages/LegalHome';
-import Survey from '../pages/Survey';
-import SurveyAdmin from '../pages/SurveyAdmin';
+import LegalClients from '../features/legal-management/pages/LegalClients';
+import LegalCases from '../features/legal-management/pages/LegalCases';
+import LegalHome from '../features/legal-management/pages/LegalHome';
+import Survey from '../features/surveys/pages/Survey';
+import SurveyAdmin from '../features/surveys/pages/SurveyAdmin';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -34,9 +38,20 @@ export const AppRouter = () => {
       <ScrollToTop />
       <Routes>
         <Route path="/login" element={<Login />}/>
+        <Route path="/forgot-password" element={<ForgotPassword />}/>
+        <Route path="/email-confirmation" element={<EmailConfirmation />}/>
         <Route path="/survey" element={<Survey />}/>
         <Route path="/survey-admin" element={<SurveyAdmin />}/>
         <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
+            <Route path="/register" element={<Register />}/>
+          </Route>
+          <Route element={<ProtectedRoute requiredRole="ADMIN" requiredSystem="COOPERA" />}>
+            <Route element={<PublicDashboardLayout />}>
+              <Route path="/projects/new" element={<ProjectWizard />}/>
+              <Route path="/projects/:id/edit" element={<ProjectWizard />}/>
+            </Route>
+          </Route>
           <Route element={<PublicDashboardLayout />}>
             <Route path="/" element={<Dashboard />}/>
             <Route path="/detailed-view" element={<DetailedView />}/>
