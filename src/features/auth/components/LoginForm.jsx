@@ -89,7 +89,7 @@ export const LoginForm = () => {
               Sistema
             </span>
             <select
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-700 focus:ring-2 focus:ring-sky-700/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               disabled={isSubmitting}
               {...register("system")}
             >
@@ -138,7 +138,7 @@ export const LoginForm = () => {
         </form>
         <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
           <Link
-            className="font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
+            className="font-semibold text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200"
             to="/forgot-password"
           >
             ¿Olvidaste tu contraseña?
