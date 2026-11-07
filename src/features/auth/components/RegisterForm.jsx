@@ -118,16 +118,16 @@ export const RegisterForm = () => {
   };
 
   return (
-    <div className="auth-form-shell flex items-center justify-center bg-gray-50 p-4 pt-24 sm:p-6 sm:pt-28 lg:p-8 lg:pt-28">
-      <section className="auth-form-card w-full max-w-xl space-y-6 rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+    <div className="flex w-full justify-center">
+      <section className="w-full max-w-xl space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <header className="text-center">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
             Coopera2075 · Administración
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Registrar cuenta
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Crea una cuenta Coopera asignándole un rol disponible.
           </p>
         </header>
@@ -197,7 +197,7 @@ export const RegisterForm = () => {
               className={`h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-950 dark:text-slate-100 ${
                 errors.roleId
                   ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 dark:border-rose-500"
-                  : "border-slate-300 focus:border-emerald-700 focus:ring-emerald-700/15 dark:border-slate-700 dark:focus:border-emerald-400"
+                  : "border-slate-300 focus:border-sky-700 focus:ring-sky-700/15 dark:border-slate-700 dark:focus:border-sky-400"
               }`}
               disabled={
                 isSubmitting ||
@@ -277,9 +277,9 @@ export const RegisterForm = () => {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-300">
           <Link
-            className="font-semibold text-emerald-700 hover:text-emerald-900"
+            className="font-semibold text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200"
             to="/"
           >
             Volver al panel
