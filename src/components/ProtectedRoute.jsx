@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 
-export const ProtectedRoute = ({ requiredRole, requiredSystem }) => {
+export const ProtectedRoute = ({ requiredRole, requiredSystem, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
@@ -38,6 +38,18 @@ export const ProtectedRoute = ({ requiredRole, requiredSystem }) => {
           </p>
         </div>
       </main>
+    );
+  }
+
+  if (
+    allowedRoles &&
+    !allowedRoles.some((role) => user?.role?.toUpperCase() === role.toUpperCase())
+  ) {
+    return (
+      <Navigate
+        to={user?.role?.toUpperCase() === "CLIENT" ? "/account" : "/"}
+        replace
+      />
     );
   }
 

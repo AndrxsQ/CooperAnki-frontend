@@ -38,12 +38,15 @@ export const LoginForm = () => {
       // The LoginRequest accepts an optional system to disambiguate accounts.
       const response = await api.post('/auth/login', data);
 
-      login(response.data);
+      const authenticatedUser = login(response.data);
 
       const previousLocation = location.state?.from;
-      const destination = previousLocation
-        ? `${previousLocation.pathname}${previousLocation.search ?? ''}${previousLocation.hash ?? ''}`
-        : '/';
+      const destination =
+        authenticatedUser.role === "CLIENT"
+          ? "/account"
+          : previousLocation
+            ? `${previousLocation.pathname}${previousLocation.search ?? ''}${previousLocation.hash ?? ''}`
+            : '/';
       navigate(destination, { replace: true });
     } catch (error) {
       const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;

@@ -4,16 +4,29 @@ import { useAuth } from "../context/useAuth";
 import { useTheme } from "../context/useTheme";
 import { Header } from "./Header";
 import Sidebar from "./Sidebar";
+import { useToast } from "../context/useToast";
+import { getUserFacingErrorMessage } from "../api/httpErrors";
 
 const MainLayout = () => {
   const { user, logout } = useAuth();
+  const { addToast } = useToast();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/", { replace: true });
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      addToast({
+        message: getUserFacingErrorMessage(
+          error,
+          "No fue posible cerrar la sesión en el servidor.",
+        ),
+      });
+    } finally {
+      navigate("/", { replace: true });
+    }
   };
 
   return (
