@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { useToast } from "../../../context/useToast";
 import { getAvailableRoles, createUser } from "../api/auth";
+import { VALID_ROLE_IDS } from "../../../config/subsystems";
 import { registerSchema } from "../schemas/registerSchema";
 
 const defaultValues = {
@@ -49,7 +50,12 @@ export const RegisterForm = () => {
     getAvailableRoles(controller.signal)
       .then((availableRoles) => {
         if (!controller.signal.aborted) {
-          setRoles(availableRoles);
+          // Solo se ofrecen los cinco roles habilitados en la plataforma.
+          setRoles(
+            availableRoles.filter((role) =>
+              VALID_ROLE_IDS.includes(String(role.name).toUpperCase()),
+            ),
+          );
           setRolesStatus({
             key: retryRoles,
             status: "success",
@@ -280,7 +286,7 @@ export const RegisterForm = () => {
         <p className="text-center text-sm text-slate-600 dark:text-slate-300">
           <Link
             className="font-semibold text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-200"
-            to="/"
+            to="/cuenta"
           >
             Volver al panel
           </Link>

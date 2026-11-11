@@ -4,7 +4,7 @@ import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import SearchBar from "../../../components/SearchBar";
 import { getEconomicUnits } from "../../economic-units/api/economicUnits";
 
-const casesBasePath = "/legal-management/cases";
+const casesBasePath = "/informacion/juridica/expedientes";
 
 const caseHierarchy = [
   {
@@ -714,7 +714,7 @@ const LegalCases = () => {
                       <li key={unit.id}>
                         <Link
                           className="block rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-700 dark:hover:bg-slate-800"
-                          to={`/legal-management/clients/${encodeURIComponent(unit.id)}`}
+                          to={`/informacion/juridica/clientes/${encodeURIComponent(unit.id)}`}
                         >
                           <span className="block font-semibold text-slate-900 dark:text-slate-100">
                             {unit.name || "Nombre no disponible"}

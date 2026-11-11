@@ -20,10 +20,6 @@ const mapUser = (data) => {
     role,
     active: data.active,
     emailNotificationsEnabled: data.emailNotificationsEnabled,
-    accountSystem: data.accountSystem ?? null,
-    allowedSystems: Array.isArray(data.allowedSystems)
-      ? data.allowedSystems
-      : [],
   };
 };
 

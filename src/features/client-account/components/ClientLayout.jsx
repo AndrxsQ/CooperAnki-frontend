@@ -4,12 +4,15 @@ import { useTheme } from "../../../context/useTheme";
 import { useToast } from "../../../context/useToast";
 import { getUserFacingErrorMessage } from "../../../api/httpErrors";
 import { Button } from "../../../components/ui/Button";
+import { SubsystemSwitcher } from "../../../components/SubsystemSwitcher";
+import { getAccountNavigation } from "../../../config/subsystems";
 
 const ClientLayout = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const navigation = getAccountNavigation(user?.role);
 
   const handleLogout = async () => {
     try {
@@ -48,6 +51,7 @@ const ClientLayout = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <SubsystemSwitcher />
             <span className="hidden max-w-48 truncate text-sm font-medium text-slate-700 dark:text-slate-200 sm:block">
               {user?.fullName ?? user?.name}
             </span>
@@ -76,31 +80,22 @@ const ClientLayout = () => {
             aria-label="Navegación de cuenta"
             className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900 lg:grid-cols-1"
           >
-            <NavLink
-              end
-              to="/account"
-              className={({ isActive }) =>
-                `rounded-lg px-4 py-3 text-sm font-semibold no-underline transition ${
-                  isActive
-                    ? "bg-[#eaf4f9] text-[#123b5d] dark:bg-slate-800 dark:text-sky-300"
-                    : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`
-              }
-            >
-              Cuenta
-            </NavLink>
-            <NavLink
-              to="/account/legal-information"
-              className={({ isActive }) =>
-                `rounded-lg px-4 py-3 text-sm font-semibold no-underline transition ${
-                  isActive
-                    ? "bg-[#eaf4f9] text-[#123b5d] dark:bg-slate-800 dark:text-sky-300"
-                    : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                }`
-              }
-            >
-              Información Jurídica
-            </NavLink>
+            {navigation.map((item) => (
+              <NavLink
+                end={item.end}
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `rounded-lg px-4 py-3 text-sm font-semibold no-underline transition ${
+                    isActive
+                      ? "bg-[#eaf4f9] text-[#123b5d] dark:bg-slate-800 dark:text-sky-300"
+                      : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
         </aside>
 

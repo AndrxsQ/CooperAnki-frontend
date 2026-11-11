@@ -7,6 +7,7 @@ import ConvocatoriaCard from "../components/ConvocatoriaCard";
 import FilterPanel from "../components/FilterPanel";
 import { MatchingNotificationsPanel } from "../components/MatchingNotificationsPanel";
 import { getProjectRecommendations } from "../api/matching";
+import { canAccessSubsystem } from "../../../config/subsystems";
 
 const projectPageSize = 100;
 const recommendationPageSize = 20;
@@ -75,9 +76,10 @@ const Searching = () => {
     status: "idle",
   });
 
-  const canAccessRecommendations =
-    user?.role === "ADMIN" &&
-    user?.allowedSystems?.some((system) => system === "COOPERA");
+  const canAccessRecommendations = canAccessSubsystem(
+    user?.role,
+    "COOPERATION",
+  );
   const projectsRequestKey = `${projectsPage}:${projectsRetryKey}`;
   const recommendationRequestKey = JSON.stringify([
     selectedProjectId,
@@ -214,8 +216,7 @@ const Searching = () => {
           Catálogo de convocatorias internacionales
         </h1>
         <EmptyState>
-          Esta sección requiere una cuenta ADMIN con acceso al sistema de
-          Cooperación.
+          Esta sección requiere acceso al Sistema de cooperación.
         </EmptyState>
       </section>
     );
@@ -285,7 +286,7 @@ const Searching = () => {
             Aún no hay proyectos disponibles.{" "}
             <Link
               className="font-semibold text-emerald-800 underline underline-offset-2 dark:text-emerald-300"
-              to="/projects/new"
+              to="/cooperacion/proyectos/nuevo"
             >
               Crear proyecto
             </Link>

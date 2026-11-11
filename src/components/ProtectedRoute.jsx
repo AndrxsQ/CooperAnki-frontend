@@ -1,7 +1,32 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import {
+  canAccessSubsystem,
+  getRoleConfig,
+  normalizeRole,
+} from '../config/subsystems';
 
-export const ProtectedRoute = ({ requiredRole, requiredSystem, allowedRoles }) => {
+export const AccessDenied = ({ title, message }) => (
+  <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center dark:bg-slate-950">
+    <div className="max-w-md">
+      <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+        {title ?? "Acceso denegado"}
+      </h1>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        {message ?? "No tienes permisos para acceder a esta sección."}
+      </p>
+    </div>
+  </main>
+);
+
+export const RolNotEnabled = () => (
+  <AccessDenied
+    title="Rol no habilitado"
+    message="El rol de tu cuenta no tiene acceso habilitado en la plataforma."
+  />
+);
+
+export const ProtectedRoute = ({ requiredRole, allowedRoles, subsystem }) => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
@@ -23,54 +48,27 @@ export const ProtectedRoute = ({ requiredRole, requiredSystem, allowedRoles }) =
     );
   }
 
-  if (
-    requiredRole &&
-    user?.role?.toUpperCase() !== requiredRole.toUpperCase()
-  ) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center dark:bg-slate-950">
-        <div className="max-w-md">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            Acceso denegado
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            No tienes permisos para acceder a esta sección.
-          </p>
-        </div>
-      </main>
-    );
+  const role = normalizeRole(user?.role);
+  const roleConfig = getRoleConfig(role);
+
+  // Solo los cinco roles habilitados pueden operar en la aplicación.
+  if (!roleConfig) {
+    return <RolNotEnabled />;
+  }
+
+  if (subsystem && !canAccessSubsystem(role, subsystem)) {
+    return <Navigate to={roleConfig.home} replace />;
+  }
+
+  if (requiredRole && role !== normalizeRole(requiredRole)) {
+    return <AccessDenied />;
   }
 
   if (
     allowedRoles &&
-    !allowedRoles.some((role) => user?.role?.toUpperCase() === role.toUpperCase())
+    !allowedRoles.some((allowedRole) => normalizeRole(allowedRole) === role)
   ) {
-    return (
-      <Navigate
-        to={user?.role?.toUpperCase() === "CLIENT" ? "/account" : "/"}
-        replace
-      />
-    );
-  }
-
-  if (
-    requiredSystem &&
-    !user?.allowedSystems?.some(
-      (system) => system.toUpperCase() === requiredSystem.toUpperCase(),
-    )
-  ) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-center dark:bg-slate-950">
-        <div className="max-w-md">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            Sistema no habilitado
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Tu cuenta no tiene acceso al sistema requerido para esta sección.
-          </p>
-        </div>
-      </main>
-    );
+    return <Navigate to={roleConfig.home} replace />;
   }
 
   return <Outlet />;

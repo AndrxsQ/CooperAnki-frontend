@@ -4,13 +4,13 @@ const workAreas = [
   {
     title: "Clientes",
     description: "Consulta el directorio de unidades económicas.",
-    to: "/legal-management/clients",
+    to: "/informacion/juridica/clientes",
     action: "Abrir clientes",
   },
   {
     title: "Expedientes",
     description: "Explora la clasificación de asuntos jurídicos.",
-    to: "/legal-management/cases",
+    to: "/informacion/juridica/expedientes",
     action: "Abrir expedientes",
   },
 ];

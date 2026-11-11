@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { SubsystemSwitcher } from "./SubsystemSwitcher";
 
 export const Header = ({
   user,
@@ -60,7 +61,7 @@ export const Header = ({
           {user?.role?.toUpperCase() === "ADMIN" && (
             <Link
               className="rounded-lg px-3 py-2 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-              to="/register"
+              to="/cuenta/cuentas"
             >
               Crear cuenta
             </Link>
@@ -74,6 +75,7 @@ export const Header = ({
               Cerrar sesión
             </button>
           )}
+          <SubsystemSwitcher />
           <button
             aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
             aria-pressed={isDark}
@@ -113,6 +115,7 @@ export const Header = ({
       </div>
 
       <div className="ml-auto flex items-center gap-2 md:gap-[18px]">
+        <SubsystemSwitcher />
         <button
           aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
           aria-pressed={isDark}
@@ -184,7 +187,7 @@ export const Header = ({
                 <Link
                   className="mt-3 block w-full border-t border-slate-200 pt-2.5 text-left text-[13px] font-medium text-slate-700 hover:text-emerald-800 dark:border-slate-700 dark:text-slate-200 dark:hover:text-emerald-300"
                   onClick={() => setProfileOpen(false)}
-                  to="/register"
+                  to="/cuenta/cuentas"
                 >
                   Crear cuenta
                 </Link>

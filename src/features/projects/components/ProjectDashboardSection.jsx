@@ -5,6 +5,7 @@ import { useAuth } from "../../../context/useAuth";
 import { Alert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
 import { getProjects, projectStatuses } from "../api/projects";
+import { canAccessSubsystem } from "../../../config/subsystems";
 
 const pageSize = 10;
 
@@ -80,13 +81,13 @@ const ProjectCard = ({ project }) => (
       )}
       <Link
         className="mt-3 inline-flex w-fit text-sm font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
-        to={`/projects/${project.id}/edit`}
+        to={`/cooperacion/proyectos/${project.id}/editar`}
       >
         Editar propuesta
       </Link>
       <Link
         className="ml-4 inline-flex w-fit text-sm font-semibold text-sky-800 hover:text-sky-950 dark:text-sky-300 dark:hover:text-sky-200"
-        to={`/projects/${project.id}/edit?section=attachments`}
+        to={`/cooperacion/proyectos/${project.id}/editar?section=attachments`}
       >
         Gestionar adjuntos
       </Link>
@@ -132,9 +133,7 @@ export const ProjectDashboardSection = () => {
     status: "loading",
   });
 
-  const hasProjectAccess =
-    user?.role === "ADMIN" &&
-    user?.allowedSystems?.includes("COOPERA");
+  const hasProjectAccess = canAccessSubsystem(user?.role, "COOPERATION");
   const projectRequestKey = JSON.stringify([
     searchTerm,
     status,
@@ -275,8 +274,8 @@ export const ProjectDashboardSection = () => {
           </h2>
         </header>
         <Alert title="Acceso restringido" variant="warning">
-          El módulo de proyectos está disponible para cuentas ADMIN con acceso
-          al sistema Coopera.
+          El módulo de proyectos está disponible para los roles con acceso al
+          Sistema de cooperación.
         </Alert>
       </section>
     );
@@ -302,7 +301,7 @@ export const ProjectDashboardSection = () => {
           </div>
           <Link
             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-transparent bg-emerald-800 px-4 text-sm font-semibold text-white no-underline shadow-sm transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-            to="/projects/new"
+            to="/cooperacion/proyectos/nuevo"
           >
             Registrar propuesta
           </Link>

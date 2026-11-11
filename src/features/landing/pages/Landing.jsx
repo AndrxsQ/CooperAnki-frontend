@@ -59,7 +59,7 @@ const Landing = () => {
         variant="landing"
         user={isAuthenticated ? user : null}
         isDark={isDark}
-        onLogin={() => navigate(isAuthenticated ? "/searching" : "/login")}
+        onLogin={() => navigate(isAuthenticated ? "/cooperacion/convocatorias" : "/login")}
         onToggleTheme={toggleTheme}
       />
 
@@ -76,7 +76,7 @@ const Landing = () => {
               <button
                 className="landing-primary-button"
                 type="button"
-                onClick={() => navigate(isAuthenticated ? "/searching" : "/login")}
+                onClick={() => navigate(isAuthenticated ? "/cooperacion/convocatorias" : "/login")}
               >
                 {isAuthenticated ? "Explorar oportunidades" : "Iniciar sesión"}
               </button>
@@ -147,7 +147,7 @@ const Landing = () => {
             <button
               className="showcase-more-link"
               type="button"
-              onClick={() => navigate(isAuthenticated ? "/callProposal" : "/login")}
+              onClick={() => navigate(isAuthenticated ? "/cooperacion/propuestas" : "/login")}
             >
               Ver más <span aria-hidden="true">↗</span>
             </button>

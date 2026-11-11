@@ -280,12 +280,12 @@ const LegalClients = () => {
                     aria-label={`Ver perfil jurídico de ${client.name}`}
                     className="h-12 cursor-pointer transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-sky-700 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800"
                     onClick={() =>
-                      navigate(`/legal-management/clients/${client.id}`)
+                      navigate(`/informacion/juridica/clientes/${client.id}`)
                     }
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        navigate(`/legal-management/clients/${client.id}`);
+                        navigate(`/informacion/juridica/clientes/${client.id}`);
                       }
                     }}
                     role="link"
