@@ -35,7 +35,7 @@ export const Footer = ({ websiteUrl, socialLinks = defaultSocialLinks }) => (
           </ul>
         </div>
       </div>
-      <p className="footer-copyright">Coopera2075</p>
+      <p className="footer-copyright">Cooperación</p>
     </div>
   </footer>
 );

@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 const workAreas = [
   {
     title: "Clientes",
-    description: "Consulta el directorio de unidades económicas.",
-    to: "/informacion/juridica/clientes",
+    description: "Consulta el directorio de Gestión de Información.",
+    to: "/legal-management/clients",
     action: "Abrir clientes",
   },
   {

@@ -68,7 +68,7 @@ const LegalClients = () => {
             status: "error",
             message: getUserFacingErrorMessage(
               error,
-              "No se pudieron cargar las unidades económicas.",
+              "No se pudieron cargar los registros de Gestión de Información.",
             ),
           });
         }
@@ -155,8 +155,8 @@ const LegalClients = () => {
           Clientes
         </h1>
         <p className="m-0 max-w-[680px] text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          Consulta las unidades económicas registradas y encuentra rápidamente
-          sus expedientes y radicados.
+          Consulta los registros de Gestión de Información y encuentra
+          rápidamente sus expedientes y radicados.
         </p>
       </div>
 
@@ -219,7 +219,7 @@ const LegalClients = () => {
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
             {loading
-              ? "Cargando unidades económicas..."
+              ? "Cargando Gestión de Información..."
               : `${numberFormatter.format(totalRecords)} registros encontrados`}
           </p>
         </div>
@@ -254,7 +254,7 @@ const LegalClients = () => {
                     className="px-5 py-10 text-center text-slate-500 dark:text-slate-300"
                     colSpan={7}
                   >
-                    Cargando unidades económicas...
+                    Cargando Gestión de Información...
                   </td>
                 </tr>
               ) : loadError ? (

@@ -82,7 +82,7 @@ export const LoginForm = () => {
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-7 text-center">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">
-            Coopera2075
+            Cooperación
           </p>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
             Iniciar Sesión
@@ -93,6 +93,20 @@ export const LoginForm = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5" noValidate>
+          <label className="grid gap-1.5">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Sistema
+            </span>
+            <select
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-700 focus:ring-2 focus:ring-sky-700/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              disabled={isSubmitting}
+              {...register("system")}
+            >
+              <option value="COOPERA">Cooperación</option>
+              <option value="ECONOMIC_UNITS">Gestión de Información</option>
+            </select>
+          </label>
+
           <Input
             autoComplete="username"
             disabled={isSubmitting}

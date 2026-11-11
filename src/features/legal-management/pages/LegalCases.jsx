@@ -681,8 +681,8 @@ const LegalCases = () => {
                     Usuarios relacionados ({relatedUsers.units.length})
                   </h4>
                   <p className="mb-0 mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Se muestran todas las unidades económicas registradas para
-                    este proceso.
+                    Se muestran todos los registros de Gestión de Información
+                    disponibles para este proceso.
                   </p>
                 </div>
                 {relatedUsers.status === "loading" ? (
