@@ -305,11 +305,11 @@ const DetailedView = () => {
                     key={record.id}
                     aria-label={`Ver perfil de ${record.name}`}
                     className="h-12 cursor-pointer transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-emerald-700 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800"
-                    onClick={() => navigate(`/economic-units/${record.id}`)}
+                    onClick={() => navigate(`/informacion/unidades/${record.id}`)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        navigate(`/economic-units/${record.id}`);
+                        navigate(`/informacion/unidades/${record.id}`);
                       }
                     }}
                     tabIndex={0}
