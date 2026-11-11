@@ -41,21 +41,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-[76px] shrink-0 flex-col justify-center gap-0.5 px-6">
-          <div className="flex items-center gap-3 text-[17px] font-bold tracking-tight">
-            <span
-              className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-[#42a7cf] text-lg text-white"
-              aria-hidden="true"
-            >
-              C
-            </span>
-            <span>Coopera2075</span>
-          </div>
-          {subsystemId && (
-            <span className="ml-[46px] text-[11px] font-semibold uppercase tracking-wide text-[#9cc9dd]">
-              {SUBSYSTEMS[subsystemId].shortLabel}
-            </span>
-          )}
+        <div className="flex h-[76px] shrink-0 items-center gap-3 px-6 text-[17px] font-bold tracking-tight">
+          <span
+            className="grid h-[34px] w-[34px] place-items-center rounded-[10px] bg-[#42a7cf] text-lg text-white"
+            aria-hidden="true"
+          >
+            C
+          </span>
+          <span>Cooperación</span>
         </div>
 
         <nav

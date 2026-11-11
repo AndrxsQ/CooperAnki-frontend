@@ -67,7 +67,7 @@ const Landing = () => {
         <section className="landing-hero" aria-labelledby="landing-title">
           <div className="landing-hero-content">
             <p className="landing-eyebrow">Cooperación para el desarrollo</p>
-            <h1 id="landing-title">Bienvenido a <span>Coopera2075</span></h1>
+            <h1 id="landing-title">Bienvenido a <span>Cooperación</span></h1>
             <p className="landing-hero-description">
               Conectamos iniciativas, organizaciones y oportunidades para
               contribuir a un desarrollo más justo y sostenible.
@@ -104,7 +104,7 @@ const Landing = () => {
             <p className="landing-eyebrow">Nuestra misión</p>
             <h2>La cooperación crea posibilidades.</h2>
             <p>
-              En Coopera2075 nos dedicamos a contribuir a la reducción de la
+              En Cooperación nos dedicamos a contribuir a la reducción de la
               pobreza, la defensa de los derechos humanos y la promoción de
               iniciativas transformadoras de alcance internacional. Creemos en
               el poder de las alianzas para convertir ideas en oportunidades.
