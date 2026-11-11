@@ -1,19 +1,28 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { publicNavigationGroups } from "./publicNavigationGroups";
+import { useAuth } from "../context/useAuth";
+import {
+  getNavigationForSubsystem,
+  getSubsystemFromPath,
+  SUBSYSTEMS,
+} from "../config/subsystems";
 
-const Sidebar = ({ isOpen, onClose, showPublicGroups = false }) => {
+const Sidebar = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = useState({
-    territorial: true,
-    legal: location.pathname.startsWith("/legal-management"),
-  });
+  const subsystemId = getSubsystemFromPath(location.pathname);
+  const groups = getNavigationForSubsystem(subsystemId, user?.role);
+  const [collapsed, setCollapsed] = useState({});
+  const [lastSubsystemId, setLastSubsystemId] = useState(subsystemId);
+
+  // Al cambiar de subsistema se expanden de nuevo todos los grupos.
+  if (lastSubsystemId !== subsystemId) {
+    setLastSubsystemId(subsystemId);
+    setCollapsed({});
+  }
 
   const toggleGroup = (groupId) => {
-    setExpandedGroups((current) => ({
-      ...current,
-      [groupId]: !current[groupId],
-    }));
+    setCollapsed((current) => ({ ...current, [groupId]: !current[groupId] }));
   };
 
   return (
@@ -49,9 +58,8 @@ const Sidebar = ({ isOpen, onClose, showPublicGroups = false }) => {
           <p className="mb-2.5 ml-2.5 text-[13px] font-bold tracking-normal text-[#b9d8e8]">
             Menú
           </p>
-          {showPublicGroups
-            ? publicNavigationGroups.map((group) => {
-            const isExpanded = Boolean(expandedGroups[group.id]);
+          {groups.map((group) => {
+            const isExpanded = !collapsed[group.id];
 
             return (
               <section className="grid gap-1" key={group.id}>
@@ -111,33 +119,7 @@ const Sidebar = ({ isOpen, onClose, showPublicGroups = false }) => {
                 )}
               </section>
             );
-          })
-            : [
-                { to: "/callProposal", label: "Convocatorias", icon: "▤" },
-                { to: "/searching", label: "Búsqueda", icon: "⌕" },
-                { to: "/payments", label: "Pagos", icon: "$" },
-              ].map(({ to, label, icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex min-h-[46px] items-center gap-[13px] rounded-lg px-3 text-sm text-[#e7f4fa] no-underline transition-colors hover:bg-[#087ca6] hover:text-white ${
-                      isActive
-                        ? "bg-[#087ca6] text-white shadow-[inset_3px_0_#74c8e6]"
-                        : ""
-                    }`
-                  }
-                >
-                  <span
-                    aria-hidden="true"
-                    className="inline-grid w-[22px] shrink-0 place-items-center text-[19px] text-[#74c8e6]"
-                  >
-                    {icon}
-                  </span>
-                  <span>{label}</span>
-                </NavLink>
-              ))}
+          })}
         </nav>
       </aside>
     </>

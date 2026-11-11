@@ -227,7 +227,7 @@ export const ProjectWizard = () => {
       <header className="grid gap-2">
         <Link
           className="w-fit text-sm font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-200"
-          to="/"
+          to="/cooperacion"
         >
           ← Volver al dashboard
         </Link>
@@ -326,7 +326,7 @@ export const ProjectWizard = () => {
               </Button>
               <Button
                 onClick={() =>
-                  navigate("/", {
+                  navigate("/cooperacion", {
                     replace: true,
                     state: { projectId: savedProjectId },
                   })

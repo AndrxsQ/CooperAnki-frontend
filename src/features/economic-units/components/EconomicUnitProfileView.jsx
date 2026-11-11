@@ -41,8 +41,8 @@ const EconomicUnitProfileView = ({ record, mode, backTo }) => {
   const isLegal = mode === "legal";
   const fields = isLegal ? legalFields : territorialFields;
   const switchTo = isLegal
-    ? `/economic-units/${encodeURIComponent(record.id)}`
-    : `/legal-management/clients/${encodeURIComponent(record.id)}`;
+    ? `/informacion/unidades/${encodeURIComponent(record.id)}`
+    : `/informacion/juridica/clientes/${encodeURIComponent(record.id)}`;
 
   return (
     <section

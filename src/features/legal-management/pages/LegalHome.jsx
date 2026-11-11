@@ -10,7 +10,7 @@ const workAreas = [
   {
     title: "Expedientes",
     description: "Explora la clasificación de asuntos jurídicos.",
-    to: "/legal-management/cases",
+    to: "/informacion/juridica/expedientes",
     action: "Abrir expedientes",
   },
 ];

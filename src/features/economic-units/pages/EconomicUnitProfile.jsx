@@ -11,7 +11,7 @@ const EconomicUnitProfile = ({ mode = "territorial" }) => {
   const [retryKey, setRetryKey] = useState(0);
   const requestKey = `${id}:${mode}:${retryKey}`;
   const backTo =
-    mode === "legal" ? "/legal-management/clients" : "/detailed-view";
+    mode === "legal" ? "/informacion/juridica/clientes" : "/informacion/territorio";
 
   useEffect(() => {
     const controller = new AbortController();

@@ -1,4 +1,4 @@
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from "react-router-dom";
@@ -8,6 +8,11 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { useToast } from '../../../context/useToast';
 import { useAuth } from '../../../context/useAuth';
+import {
+  canAccessSubsystem,
+  getDefaultHome,
+  getSubsystemFromPath,
+} from '../../../config/subsystems';
 import { loginSchema } from '../schemas/loginSchema';
 
 export const LoginForm = () => {
@@ -22,14 +27,11 @@ export const LoginForm = () => {
     handleSubmit,
     clearErrors,
     setError,
-    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
-    defaultValues: { system: "COOPERA" },
   });
-  const loginSystem = useWatch({ control, name: "system" });
 
   // Solo se ejecuta si la validación de Zod pasa
   const onSubmit = async (data) => {
@@ -40,13 +42,17 @@ export const LoginForm = () => {
 
       const authenticatedUser = login(response.data);
 
+      // La raíz del rol define el subsistema inicial; una solicitud previa solo
+      // se respeta cuando el rol tiene acceso a ese subsistema.
       const previousLocation = location.state?.from;
+      const previousSubsystem = previousLocation
+        ? getSubsystemFromPath(previousLocation.pathname)
+        : null;
       const destination =
-        authenticatedUser.role === "CLIENT"
-          ? "/account"
-          : previousLocation
-            ? `${previousLocation.pathname}${previousLocation.search ?? ''}${previousLocation.hash ?? ''}`
-            : '/';
+        previousSubsystem &&
+        canAccessSubsystem(authenticatedUser.role, previousSubsystem)
+          ? `${previousLocation.pathname}${previousLocation.search ?? ''}${previousLocation.hash ?? ''}`
+          : getDefaultHome(authenticatedUser.role) ?? '/';
       navigate(destination, { replace: true });
     } catch (error) {
       const fieldErrors = error?.fieldErrors ?? error?.response?.data?.errors;
@@ -105,17 +111,9 @@ export const LoginForm = () => {
             autoComplete="username"
             disabled={isSubmitting}
             error={errors.username?.message}
-            label={
-              loginSystem === "COOPERA"
-                ? "Correo electrónico"
-                : "Usuario o correo electrónico"
-            }
-            placeholder={
-              loginSystem === "COOPERA"
-                ? "persona@ejemplo.com"
-                : "Usuario o correo electrónico"
-            }
-            type={loginSystem === "COOPERA" ? "email" : "text"}
+            label="Correo electrónico"
+            placeholder="persona@ejemplo.com"
+            type="email"
             {...register('username')}
           />
 
