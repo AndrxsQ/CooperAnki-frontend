@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
+import { MatchingScore } from "./MatchingScore";
 import { getOdsGoal } from "../data/ods";
 
 const cleanText = (value) => {
@@ -128,6 +129,11 @@ const ConvocatoriaDetailView = ({
               ))}
             </div>
           )}
+
+          <MatchingScore
+            score={convocatoria.compatibilityScore}
+            justification={convocatoria.matchingJustification}
+          />
 
           <section>
             <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">

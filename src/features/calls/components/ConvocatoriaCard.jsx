@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ConvocatoriaDetailView from "./ConvocatoriaDetailView";
+import { MatchingScore } from "./MatchingScore";
 import { getOdsGoal } from "../data/ods";
 
 const FAVORITES_KEY = "cooperanki:favoriteConvocatorias";
@@ -126,6 +127,13 @@ const ConvocatoriaCard = ({ convocatoria, onSuggest }) => {
         <h2 className="mt-2 line-clamp-2 text-lg font-semibold leading-snug text-slate-900">
           {convocatoria.titulo || "Convocatoria sin título"}
         </h2>
+
+        <div className="mt-3">
+          <MatchingScore
+            score={convocatoria.compatibilityScore}
+            justification={convocatoria.matchingJustification}
+          />
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-1.5" aria-label="ODS impactados">
           {ods.length ? ods.map((goal) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./AuthContextValue";
 import api from "../api/axios";
 
@@ -8,14 +8,18 @@ const mapUser = (data) => {
     throw new Error("El servidor no devolvió el rol de la cuenta.");
   }
 
-  const name = data.name ?? data.nombre ?? data.username ?? "Usuario";
+  const name =
+    data.fullName ?? data.name ?? data.nombre ?? data.username ?? "Usuario";
   return {
     id: data.id,
     name,
+    fullName: name,
     nombre: name,
     username: data.username,
     email: data.email,
     role,
+    active: data.active,
+    emailNotificationsEnabled: data.emailNotificationsEnabled,
     accountSystem: data.accountSystem ?? null,
     allowedSystems: Array.isArray(data.allowedSystems)
       ? data.allowedSystems
@@ -175,13 +179,28 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.setItem("user", JSON.stringify(userData));
     setLoading(false);
+    return userData;
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    setLoading(false);
-    clearStoredSession();
+  const updateUser = useCallback((data) => {
+    const updatedUser = mapUser({ ...readStoredUser(), ...data });
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    return updatedUser;
+  }, []);
+
+  const logout = async ({ revoke = true } = {}) => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    try {
+      if (revoke && refreshToken) {
+        await api.post("/auth/logout", { refreshToken });
+      }
+    } finally {
+      setToken(null);
+      setUser(null);
+      setLoading(false);
+      clearStoredSession();
+    }
   };
 
   const isAuthenticated = Boolean(token && user);
@@ -194,6 +213,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
+        updateUser,
         logout,
       }}
     >
