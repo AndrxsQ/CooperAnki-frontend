@@ -2,6 +2,7 @@ import { useState } from "react";
 import ConvocatoriaDetailView from "./ConvocatoriaDetailView";
 import { MatchingScore } from "./MatchingScore";
 import { getOdsGoal } from "../data/ods";
+import { formatCurrency, formatDate } from "../utils/formatters";
 
 const FAVORITES_KEY = "cooperanki:favoriteConvocatorias";
 
@@ -19,26 +20,6 @@ const getDaysUntilClosing = (closingDate) => {
   const closing = new Date(`${closingDate}T23:59:59`);
   if (Number.isNaN(closing.getTime())) return null;
   return Math.ceil((closing.getTime() - Date.now()) / 86_400_000);
-};
-
-const formatCurrency = (amount, currency = "COP") => {
-  if (amount === null || amount === undefined || amount === "") return "No especificado";
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number(amount));
-};
-
-const formatDate = (date) => {
-  if (!date || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) {
-    return "Fecha no especificada";
-  }
-  return new Intl.DateTimeFormat("es-CO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
 };
 
 const getClosingStatus = (daysRemaining) => {
@@ -75,6 +56,13 @@ const ConvocatoriaCard = ({ convocatoria, onSuggest }) => {
   const ods = (convocatoria.ods || [])
     .map((goalId) => getOdsGoal(goalId))
     .filter(Boolean);
+  const caracteristicas = [
+    { label: "País del donante", value: convocatoria.paisDonante },
+    { label: "Tipo de organización", value: convocatoria.tipoOrganizacion },
+    { label: "Idioma", value: convocatoria.idioma },
+    { label: "Estado", value: convocatoria.estado },
+    { label: "Moneda", value: convocatoria.moneda },
+  ];
 
   const toggleFavorite = () => {
     const favorites = readFavorites();
@@ -149,6 +137,18 @@ const ConvocatoriaCard = ({ convocatoria, onSuggest }) => {
           )) : (
             <span className="text-xs text-slate-500">ODS no especificados</span>
           )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-1.5" aria-label="Características de la convocatoria">
+          {caracteristicas.map(({ label, value }) => (
+            <span
+              key={label}
+              className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700"
+            >
+              <span className="font-semibold text-slate-500">{label}:</span>{" "}
+              {value || "No especificado"}
+            </span>
+          ))}
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
