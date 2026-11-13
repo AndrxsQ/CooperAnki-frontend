@@ -4,7 +4,6 @@ import { useAuth } from "../context/useAuth";
 import {
   getNavigationForSubsystem,
   getSubsystemFromPath,
-  SUBSYSTEMS,
 } from "../config/subsystems";
 
 const Sidebar = ({ isOpen, onClose }) => {

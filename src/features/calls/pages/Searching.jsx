@@ -43,6 +43,27 @@ const ErrorState = ({ message, onRetry }) => (
   </div>
 );
 
+// Normaliza los campos opcionales del backend: texto vacío o ausente -> null.
+const toText = (value) => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
+
+// Poblaciones objetivo puede llegar como texto o como lista de textos.
+const toTextList = (value) => {
+  if (Array.isArray(value)) {
+    const items = value.map(toText).filter(Boolean);
+    return items.length ? items.join("\n") : null;
+  }
+  return toText(value);
+};
+
+const toAmount = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  return Number.isFinite(Number(value)) ? Number(value) : null;
+};
+
 const toCallCard = (match) => ({
   id: match.fundingOpportunityId,
   titulo: match.title,
@@ -54,6 +75,35 @@ const toCallCard = (match) => ({
   descripcion: match.requirementsDescription,
   compatibilityScore: match.compatibilityScore,
   matchingJustification: match.nlpJustification,
+  paisDonante: toText(match.donorCountry),
+  tipoCooperacion: toText(match.cooperationType),
+  tipoOrganizacion: toText(match.organizationType),
+  tipoProyectos: toText(match.projectType),
+  poblacionesObjetivo: toTextList(match.targetPopulations),
+  formaPresentacion: toText(match.applicationMethod),
+  idioma: toText(match.language),
+  moneda: toText(match.currency),
+  valorEnPesos: toAmount(match.amountInCop),
+  portalOrigen: toText(match.sourcePage),
+  documentoFuente: toText(match.sourceDocument),
+  estado: toText(match.opportunityStatus),
+  detalleEstado: toText(match.opportunityStatusDetail),
+  contactoExterior: {
+    persona: toText(match.contactPerson),
+    telefono: toText(match.contactPhone),
+    fax: toText(match.contactFax),
+    direccion: toText(match.contactAddress),
+    ciudad: toText(match.contactCity),
+    email: toText(match.contactEmail),
+  },
+  contactoColombia: {
+    persona: toText(match.localContactPerson),
+    telefono: toText(match.localContactPhone),
+    direccion: toText(match.localContactAddress),
+    ciudad: toText(match.localContactCity),
+    email: toText(match.localContactEmail),
+  },
+  observaciones: toText(match.notes),
 });
 
 const Searching = () => {

@@ -3,6 +3,7 @@ import { Button } from "../../../components/ui/Button";
 import { Modal } from "../../../components/ui/Modal";
 import { MatchingScore } from "./MatchingScore";
 import { getOdsGoal } from "../data/ods";
+import { formatCurrency } from "../utils/formatters";
 
 const cleanText = (value) => {
   if (!value) return "";
@@ -38,6 +39,61 @@ const renderTextList = (value) => {
     <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
       {text}
     </p>
+  );
+};
+
+const DetailField = ({ label, value }) => (
+  <div>
+    <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">
+      {label}
+    </dt>
+    <dd className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+      {value || "No especificado"}
+    </dd>
+  </div>
+);
+
+const characteristicFields = [
+  { key: "paisDonante", label: "País del donante" },
+  { key: "tipoCooperacion", label: "Tipo de cooperación" },
+  { key: "tipoProyectos", label: "Tipo de proyectos" },
+  { key: "idioma", label: "Idioma" },
+  { key: "estado", label: "Estado" },
+  { key: "detalleEstado", label: "Detalle del estado" },
+  { key: "moneda", label: "Moneda" },
+  { key: "portalOrigen", label: "Portal de origen" },
+  { key: "documentoFuente", label: "Documento fuente" },
+];
+
+const contactFields = [
+  { key: "persona", label: "Persona de contacto" },
+  { key: "telefono", label: "Teléfono" },
+  { key: "fax", label: "Fax" },
+  { key: "direccion", label: "Dirección" },
+  { key: "ciudad", label: "Ciudad" },
+  { key: "email", label: "Correo electrónico" },
+];
+
+const ContactSection = ({ title, contact }) => {
+  const hasData = contactFields.some(({ key }) => contact?.[key]);
+
+  return (
+    <section>
+      <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+        {title}
+      </h3>
+      {hasData ? (
+        <dl className="grid gap-3 sm:grid-cols-2">
+          {contactFields.map(({ key, label }) => (
+            <DetailField key={key} label={label} value={contact?.[key]} />
+          ))}
+        </dl>
+      ) : (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No especificado.
+        </p>
+      )}
+    </section>
   );
 };
 
@@ -154,20 +210,82 @@ const ConvocatoriaDetailView = ({
             {renderTextList(convocatoria.criteriosElegibilidad)}
           </section>
 
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Características de la convocatoria
+            </h3>
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {characteristicFields.map(({ key, label }) => (
+                <DetailField
+                  key={key}
+                  label={label}
+                  value={convocatoria[key]}
+                />
+              ))}
+              <DetailField
+                label="Valor en pesos"
+                value={
+                  convocatoria.valorEnPesos === null ||
+                  convocatoria.valorEnPesos === undefined
+                    ? null
+                    : formatCurrency(convocatoria.valorEnPesos, "COP")
+                }
+              />
+            </dl>
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Poblaciones objetivo
+            </h3>
+            {renderTextList(convocatoria.poblacionesObjetivo)}
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Tipo de organización
+            </h3>
+            {renderTextList(convocatoria.tipoOrganizacion)}
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Forma de presentación
+            </h3>
+            {renderTextList(convocatoria.formaPresentacion)}
+          </section>
+
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Observaciones
+            </h3>
+            {renderTextList(convocatoria.observaciones)}
+          </section>
+
           <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
               Monto máximo ofertado
             </p>
             <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
-              {convocatoria.montoMaximo === null || convocatoria.montoMaximo === undefined
-                ? "No especificado"
-                : new Intl.NumberFormat("es-CO", {
-                  style: "currency",
-                  currency: convocatoria.moneda || "COP",
-                  maximumFractionDigits: 0,
-                }).format(Number(convocatoria.montoMaximo))}
+              {formatCurrency(convocatoria.montoMaximo, convocatoria.moneda)}
             </p>
           </div>
+
+          <section>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Datos de contacto
+            </h3>
+            <div className="grid gap-4">
+              <ContactSection
+                contact={convocatoria.contactoExterior}
+                title="Contacto en el exterior"
+              />
+              <ContactSection
+                contact={convocatoria.contactoColombia}
+                title="Contacto en Colombia"
+              />
+            </div>
+          </section>
 
           {externalUrl ? (
             <a
