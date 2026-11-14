@@ -102,6 +102,12 @@ export const SUBSYSTEM_NAVIGATION = {
           to: "/cooperacion/convocatorias",
           label: "Convocatorias y matching",
           icon: "⌕",
+          end: true,
+        },
+        {
+          to: "/cooperacion/convocatorias/catalogo",
+          label: "Catálogo de convocatorias",
+          icon: "☰",
         },
         {
           to: "/cooperacion/propuestas",

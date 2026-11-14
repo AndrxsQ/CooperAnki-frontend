@@ -8,6 +8,7 @@ import FilterPanel from "../components/FilterPanel";
 import { MatchingNotificationsPanel } from "../components/MatchingNotificationsPanel";
 import { getProjectRecommendations } from "../api/matching";
 import { canAccessSubsystem } from "../../../config/subsystems";
+import { toAmount, toText, toTextList } from "../utils/callCard";
 
 const projectPageSize = 100;
 const recommendationPageSize = 20;
@@ -43,27 +44,6 @@ const ErrorState = ({ message, onRetry }) => (
   </div>
 );
 
-// Normaliza los campos opcionales del backend: texto vacío o ausente -> null.
-const toText = (value) => {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-};
-
-// Poblaciones objetivo puede llegar como texto o como lista de textos.
-const toTextList = (value) => {
-  if (Array.isArray(value)) {
-    const items = value.map(toText).filter(Boolean);
-    return items.length ? items.join("\n") : null;
-  }
-  return toText(value);
-};
-
-const toAmount = (value) => {
-  if (value === null || value === undefined || value === "") return null;
-  return Number.isFinite(Number(value)) ? Number(value) : null;
-};
-
 const toCallCard = (match) => ({
   id: match.fundingOpportunityId,
   titulo: match.title,
@@ -73,6 +53,7 @@ const toCallCard = (match) => ({
   fechaCierre: match.closingDate,
   enlaceOficial: match.sourceUrl,
   descripcion: match.requirementsDescription,
+  areaImpacto: toText(match.impactArea),
   compatibilityScore: match.compatibilityScore,
   matchingJustification: match.nlpJustification,
   paisDonante: toText(match.donorCountry),

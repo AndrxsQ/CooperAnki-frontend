@@ -13,6 +13,7 @@ import CooperationHome from '../features/projects/pages/CooperationHome';
 import Landing from '../features/landing/pages/Landing';
 import CallProposal from '../features/calls/pages/CallProposal';
 import Searching from '../features/calls/pages/Searching';
+import ConvocatoriasCatalog from '../features/calls/pages/ConvocatoriasCatalog';
 import Payments from '../features/calls/pages/Payments';
 import { ProtectedRoute, RolNotEnabled } from '../components/ProtectedRoute';
 import MainLayout from '../components/MainLayout';
@@ -77,6 +78,7 @@ export const AppRouter = () => {
             <Route element={<MainLayout />}>
               <Route path="/cooperacion" element={<CooperationHome />}/>
               <Route path="/cooperacion/convocatorias" element={<Searching />}/>
+              <Route path="/cooperacion/convocatorias/catalogo" element={<ConvocatoriasCatalog />}/>
               <Route path="/cooperacion/propuestas" element={<CallProposal />}/>
               <Route path="/cooperacion/pagos" element={<Payments />}/>
               <Route path="/cooperacion/proyectos/nuevo" element={<ProjectWizard />}/>
