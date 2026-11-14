@@ -54,6 +54,7 @@ const DetailField = ({ label, value }) => (
 );
 
 const characteristicFields = [
+  { key: "areaImpacto", label: "Área de impacto" },
   { key: "paisDonante", label: "País del donante" },
   { key: "tipoCooperacion", label: "Tipo de cooperación" },
   { key: "tipoProyectos", label: "Tipo de proyectos" },
@@ -106,6 +107,8 @@ const ConvocatoriaDetailView = ({
 }) => {
   const [copyMessage, setCopyMessage] = useState("");
   const [suggestionMessage, setSuggestionMessage] = useState("");
+  // El catálogo no calcula compatibilidad: sin score el bloque no se renderiza.
+  const compatibilityScore = convocatoria.compatibilityScore;
   const externalUrl = (() => {
     try {
       const url = new URL(convocatoria.enlaceOficial);
@@ -186,11 +189,12 @@ const ConvocatoriaDetailView = ({
             </div>
           )}
 
-          <MatchingScore
-            score={convocatoria.compatibilityScore}
-            justification={convocatoria.matchingJustification}
-          />
-
+          {compatibilityScore !== null && compatibilityScore !== undefined && (
+            <MatchingScore
+              score={compatibilityScore}
+              justification={convocatoria.matchingJustification}
+            />
+          )}
           <section>
             <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
               Descripción

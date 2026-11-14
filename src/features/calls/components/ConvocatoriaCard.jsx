@@ -53,6 +53,11 @@ const ConvocatoriaCard = ({ convocatoria, onSuggest }) => {
   );
   const daysRemaining = getDaysUntilClosing(convocatoria.fechaCierre);
   const closingStatus = getClosingStatus(daysRemaining);
+  // El catálogo de convocatorias no calcula compatibilidad; en ese caso el
+  // bloque se omite por completo.
+  const hasCompatibility =
+    convocatoria.compatibilityScore !== null &&
+    convocatoria.compatibilityScore !== undefined;
   const ods = (convocatoria.ods || [])
     .map((goalId) => getOdsGoal(goalId))
     .filter(Boolean);
@@ -116,12 +121,14 @@ const ConvocatoriaCard = ({ convocatoria, onSuggest }) => {
           {convocatoria.titulo || "Convocatoria sin título"}
         </h2>
 
-        <div className="mt-3">
-          <MatchingScore
-            score={convocatoria.compatibilityScore}
-            justification={convocatoria.matchingJustification}
-          />
-        </div>
+        {hasCompatibility && (
+          <div className="mt-3">
+            <MatchingScore
+              score={convocatoria.compatibilityScore}
+              justification={convocatoria.matchingJustification}
+            />
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-1.5" aria-label="ODS impactados">
           {ods.length ? ods.map((goal) => (
